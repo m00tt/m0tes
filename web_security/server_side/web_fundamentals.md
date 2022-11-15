@@ -19,7 +19,7 @@ So instead of remembering 10.10.10.10, you can remember m00tt.com instead that w
 ![Domain Hierarchy](/assets/domain-hierarchy.jpg)
 A Domain Hierarchy is a system used to sort the parts of a domain according to their importance, is divided into 3 levels
 - Root Domain
-    - The Root Domain (“”) is the highest hierarchy level of any domain name system.
+    - The Root Domain (“.”) is the highest hierarchy level of any domain name system.
 - TLD (Top-Level Domains)
     - A TLD is the most righthand part of a domain name, is the end part of a URL. <br />
     There are two types of TLD :
