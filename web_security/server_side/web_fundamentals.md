@@ -17,6 +17,7 @@ So instead of remembering 10.10.10.10, you can remember m00tt.com instead that w
 
 ## Domain Hierarchy
 ![Domain Hierarchy](/assets/domain-hierarchy.jpg)
+<br />
 A Domain Hierarchy is a system used to sort the parts of a domain according to their importance, is divided into 3 levels
 - Root Domain
     - The Root Domain (“.”) is the highest hierarchy level of any domain name system.
