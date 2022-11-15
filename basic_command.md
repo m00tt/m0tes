@@ -54,3 +54,68 @@ find / -type f -mtime -7 | xargs tar -cvf LastWeek.tar
 ps -aux | sort -nk4 | tail -1
 ```
 
+11. Calculate for each user the number of files changed in the last month
+```bash
+#!/bin/sh
+
+item=0;
+for user in $(cut /etc/passwd -d : -f 3 | sort -n | uniq);
+do
+item=$(find / -user $user -type f -mtime -30 2>/dev/null | wc -l);
+echo"User $user modified $item files in last month";
+done
+```
+
+12. Find all files with odd number of lines (so they are text files)
+```bash
+find /home/user/es/ -type f | xargs wc -l | tr -s ' ' | awk {'if(($1%2)!=0) print $2'}
+```
+
+13. Find all symbolic links in the system
+```bash
+find / 2>/dev/null | xargs ls -l 2>/dev/null | grep ^l
+```
+
+14. Count the occurrence of words within a file without considering punctuation and put them in
+descending order
+```bash
+grep -oE '[[:alpha:]]+' occurrence | sort | uniq -c | sort -nr
+```
+
+15. Take the greatest occurrence within a file
+```bash
+grep -oE '[[:alpha:]]+' occurrence | sort | uniq -c | sort -nr
+```
+or
+```bash
+grep -oE '[[:alpha:]]+' occurrence | sort | uniq -c | sort -nr | sed '2d'
+```
+or
+```bash
+grep -oE '[[:alpha:]]+' occorrenze | sort | uniq -c | sort -n | tail -1
+```
+
+16. Print words with higher occurrence of files that start with "s" and have extension ".h" that are found in home/user/include
+```bash
+find /home/user/include -type f -name s*.h | xargs grep -oE '[[:alpha:]]+' | cut -d : -f 2 | sort | uniq -c | sort -nr
+```
+
+17. Print files contained in home/user/include which start for "s" and have extension ".h" and wich containing the word "the" inside them
+```bash
+find /home/user/include -type f -name s*.h | xargs grep -l 'the' | cut -d / -f 5
+```
+
+18. Calculate how many times the words DEFINE and INCLUDE appear in the total of files ".c" and ".h"
+```bash
+find / -name *.[ch] 2>/dev/null | xargs cat | grep -oe define -oe include | sort | uniq -c
+```
+
+19. Find the user who has the most files in the system
+```bash
+for user in $(cut -d: -f1 /etc/passwd); do find / -type f -user $user 2>/dev/null | echo -e $user:'\t' $(wc -l); done | sort -rn -k 2 | head -n 1
+```
+
+20. For each user print the sum of file size (made with xargs du)
+```bash
+for u in $(cut /etc/passwd -d ':' -f 1); do size=$(find / -user $u -type f 2>/dev/null | xargs du -bc 2>/dev/null | tail -1 | awk '{print $1}'); echo "$u, $size"; done
+```
