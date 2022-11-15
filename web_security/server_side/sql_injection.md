@@ -1,6 +1,5 @@
 # SQLi (SQL injection)
 
-[[_TOC_]]
 
 ![SQLi illustration](/assets/sql-injection.jpg)
 
