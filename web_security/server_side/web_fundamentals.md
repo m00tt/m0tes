@@ -152,3 +152,245 @@ nslookup -debug website.com
 <br />
 
 # HTTP
+HTTP (HyperText Transfer Protocol) is the set of rules used for communicating with web servers for the transmitting of webpage data, whether that is HTML, Images, Videos, etc.
+<br />
+<br />
+HTTPS (HyperText Transfer Protocol Secure) is the secure version of HTTP. It uses SSL certificates to encrypt client-server communication.
+In this way, thank to RSA crittography, gives also you assurances that you're talking to the correct web server and not something impersonating it.
+
+## Requests and Responses
+When we access a website, your browser will need to make requests to a web server for assets such as HTML, Images, and download the responses. Before that, you need to tell the browser specifically how and where to access these resources, this is where URLs will help.
+
+![HTTP Url](/assets/http_url.png)
+
+- <b>Scheme or Protocol</b>: This instructs on what protocol to use for accessing the resource such as HTTP, HTTPS, FTP and so on.
+
+- <b>User and Password</b>: Some services require authentication to log in, you can put a username and password into the URL to log in.
+
+- <b>Host</b>: The domain name or IP address of the server you wish to access. Check [DNS](#dns) section eventually.
+
+- <b>Port</b>: The Port that you are going to connect to, usually 80 for HTTP and 443 for HTTPS, but this can be hosted on any port between 1 - 65535.
+In case of use a not standard port, you must specify a connection port on the URL.
+
+- <b>Path</b>: The file name or location of the resource you are trying to access, manly the web page you are looking for.
+
+- <b>Query String</b>: Extra bits of information that can be sent to the requested path. For example, /blog?id=1 would tell the blog path that you wish to receive the blog article with the id of 1.
+
+- <b>Fragment</b>: This is a reference to a location on the actual page requested. It refers to HTML id tag  `<div id="task3">`
+
+<br />
+
+## Making a request
+<br />
+
+![HTTP Request](/assets/http_request.png)
+
+Request example
+```http
+GET / HTTP/1.1
+Host: example.com
+User-Agent: Mozilla/5.0 Firefox/87.0
+Referer: https://example.com/
+
+```
+
+- <b>Line 1</b>: This request is sending the GET method, request the home page with / and telling the web server we are using HTTP protocol version 1.1.
+
+- <b>Line 2</b>: We tell the web server we want the website example.com
+
+- <b>Line 3</b>: We tell the web server we are using the Firefox version 87 Browser
+
+- <b>Line 4</b>: We are telling the web server that the web page that referred us to this one is https://example.com
+
+- <b>Line 5</b>: <u>HTTP requests always end with a blank line to inform the web server that the request has finished</u>.
+
+Response example using Postman
+<br />
+
+![HTTP Request](/assets/http_get.png)
+
+
+
+## HTTP Methods
+<br />
+
+HTTP methods are a way for the client to show their intended action when making an HTTP request. There are a lot of HTTP methods but the most common are:
+- <b>GET Request</b>
+    - This is used for getting information and resources from a web server.
+```http
+GET /page2 HTTP/1.1
+
+GET / HTTP/1.1
+
+```
+```bash
+curl https://example.org
+```
+
+- <b>POST Request</b>
+    - This is used for submitting data and resources to the web server and potentially creating new records
+```http
+POST /index.html HTTP/1.1
+username=user1&password=secret
+
+POST / HTTP/1.1
+param1=value1&param2=value2
+
+```
+```bash
+curl -X POST  https://example.org/ -d "username=user1&password=secret"
+```
+
+- <b>PUT Request</b>
+    - This is used to store data and resources on a web server (used for example to update information)
+```http
+PUT /existing.html/json HTTP/1.1
+Content-type: application/json
+username=user2
+
+PUT / HTTP/1.1
+Content-type: application/json
+param1=value1
+
+```
+```bash
+curl -X PUT https://example.org -H "Content-Type: application/json" -d '{"username": "user2"}'
+```
+- <b>DELETE Request</b>
+    - This is used for deleting information nd resources from a web server.
+```http
+DELETE /new.html HTTP/1.1
+
+DELETE / HTTP/1.1
+
+```
+```bash
+curl -X DELETE https://example.org
+```
+- <b>HEAD Request</b>
+    - This is used to recover only the response header without the resource
+```http
+HEAD /new.html HTTP/1.1
+
+HEAD / HTTP/1.1
+
+```
+```bash
+curl -I https://example.org
+curl --head https://example.org
+curl -X HEAD https://example.org
+```
+- <b>OPTIONS Request</b>
+    - This is used to require the list of the methods allowed by the server.
+```http
+OPTIONS /index.html HTTP/1.1
+
+OPTIONS * HTTP/1.1
+```
+```bash
+curl -X OPTIONS https://example.org -i
+```
+
+`-i` params is used for include the response HTTP headers in result data.
+
+
+<br />
+
+## HTTP Status Codes
+<br />
+
+| Code Ranges                                                           | Description                                                        |
+|----------------------------------------------------------------|--------------------------------------------------------------------|
+| 100-199 - Information Response | These are sent to tell the client the first part of their request has been accepted and they should continue sending the rest of their request. These codes are no longer very common. |
+| 200-299 - Success | This range of status codes is used to tell the client their request was successful. |
+| 300-399 - Redirection | These are used to redirect the client's request to another resource. This can be either to a different webpage or a different website altogether. |
+| 400-499 - Client Errors | Used to inform the client that there was an error with their request. |
+| 500-599 - Server Errors | This is reserved for errors happening on the server-side and usually indicate quite a major problem with the server handling the request. |
+
+<br />
+
+| Common Codes                                                          | Description                                                        |
+|----------------------------------------------------------------|--------------------------------------------------------------------|
+| 200 - OK | The request was completed successfully. |
+| 201 - Created | A resource has been created (for example a new user or new blog post). |
+| 301 - Permanent Redirect | This redirects the client's browser to a new webpage or tells search engines that the page has moved somewhere else and to look there instead. |
+| 302 - Temporary Redirect | This redirects the client's browser to a new webpage or tells search engines that the page has moved somewhere else and to look there instead. |
+| 400 - Bad Request | This tells the browser that something was either wrong or missing in their request. This could sometimes be used if the web server resource that is being requested expected a certain parameter that the client didn't send. |
+| 401 - Not Authorised | You are not currently allowed to view this resource until you have authorised with the web application, most commonly with a username and password. |
+| 403 - Forbidden | You do not have permission to view this resource whether you are logged in or not. |
+| 405 - Method Not Allowed | The resource does not allow this method request, for example, you send a GET request to the resource /create-account when it was expecting a POST request instead. |
+| 404 - Page Not Found | The page/resource you requested does not exist. |
+| 500 - Internal Service Error | The server has encountered some kind of error with your request that it doesn't know how to handle properly. |
+| 503 - Service Unavailable | This server cannot handle your request as it's either overloaded or down for maintenance. |
+
+
+<br />
+
+## Headers
+<br />
+
+Headers are additional information produced by the interaction between the browser and the server.
+There are two types of headers:
+- <b>Headers related to the request</b>: these are headers that are sent form the client to the server. These headings are characterized by:
+    - <b>Host</b>
+        - Specifies the server where the requested resource is hosted
+    - <b>User-Agent</b>
+        - This is your browser software and version number, telling the web server your browser software helps it format the website properly for your browser and also some elements of HTML, JavaScript and CSS are only available in certain browsers.
+    - <b>Content-Length</b>
+        - When sending data to a web server such as in a form, the content length tells the web server how much data to expect in the web request. This way the server can ensure it isn't missing any data.
+    - <b>Accept-Encoding</b>
+        - Tells the web server what types of compression methods the browser supports so the data can be made smaller for transmitting over the internet.
+    - <b>Cookie</b> 
+        - Data sent to the server to help remember your information
+- <b>Headers related to the response</b>: these are headers that are sent by the server to the client in response to a request
+    - <b>Set-Cookie</b>
+        - Information to store which gets sent back to the web server on each request 
+    - <b>Cache-Control</b>
+        - How long to store the content of the response in the browser's cache before it requests it again.
+    - <b>Content-Type</b>
+        - This tells the client what type of data is being returned, i.e., HTML, CSS, JavaScript, Images, PDF, Video, etc. Using the content-type header the browser then knows how to process the data.
+    - <b>Content-Encoding</b>
+        - What method has been used to compress the data to make it smaller when sending it over the internet.
+
+
+
+
+
+<br />
+
+## Cookies
+<br />
+
+ Cookies are just a small piece of data that is stored on your computer. Cookies are saved when you receive a `Set-Cookie` header from a web server. Then every further request you make, you'll send the cookie data back to the web server. Because <b>HTTP is stateless</b> (doesn't keep track of your previous requests), cookies can be used to remind the web server who you are, some personal settings for the website or whether you've been to the website before.
+
+<br />
+
+![Cookie Flow](/assets/cookie_flow.png)
+
+<br />
+
+ There are three types of computer cookies: session, persistent, and third-party.  These virtually invisible text files are all very different.  Each with their own mission, these cookies are made to track, collect, and store any data that companies request.
+
+ ### Session Cookie
+ Session cookies are temporary cookies that memorize your online activities.  Since websites have no sense of memory, without these cookies, your site browsing history would always be blank.  In fact, with every click you would make, the website would treat you as a completely new visitor.
+
+A good example of how session cookies are helpful is online shopping.  When you’re shopping online, you can check-out at any time.  That’s because session cookies track your movement.  Without these cookies, whenever you would go to check-out, your cart would be empty.
+
+Ultimately, session cookies help you maneuver through the internet by remembering your actions, and they expire as soon as you close out of a web page.
+
+### Persistent Cookie
+Persistent cookies (also known as first-party cookies) work by tracking your online preferences.  When you visit a website for the first time, it is at its default setting.  But if you personalize the site to fit your preferences, persistent cookies will remember and implement those preferences the next time you visit the site.  This is how computers remember and store your login information, language selections, menu preferences, internal bookmarks, and more.
+
+Persistent, permanent, and stored cookies are terms used interchangeably as these cookies are stored in your hard disk for (typically) a long period of time.  The cookie’s timeline will vary depending on the expiration date.  But, once that date is reached, the cookie will be deleted, along with everything you customized.  Luckily, websites prefer to employ a long-life span so that users can make the most of their personal preferences.
+
+### Third-Part Cookie
+Third-party cookies, also referred to as tracking cookies, collect data based on your online behavior.  When you visit a website, third-party cookies collect various types of data that are then passed on or sold to advertisers by the website that created the cookie.  Tracking your interests, location, age, and search trends, these cookies collect information so that marketers can provide you with custom advertisements.  These are the ads that appear on websites you visit and display content relevant to your interests.
+
+By tracking your habits and providing targeted ads, third-party cookies serve a useful purpose for marketers but can seem pesky and intrusive to internet users.  That’s why you have the option to block them.
+
+<br />
+
+<b>Pay attention</b>: In recent years, the use of cookies has been standardized and regulated. Each user must be informed about the use of web cookies and can change the settings at their pleasure. <br />
+You can find more here: [GDPR](https://gdpr-info.eu/)
+
+
