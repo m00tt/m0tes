@@ -6,7 +6,16 @@
    - [DNS Request](#dns-request)
    - [Useful Command](#useful-commands)
 
-2. HTTP
+2. [HTTP](#http)
+   - [Requests and Responses](#requests-and-responses)
+   - [Making a Request](#making-a-request)
+   - [HTTP Methods](#http-methods)
+   - [HTTP Status Codes](#http-status-codes)
+   - [Headers](#headers)
+   - [Cookies](#cookies)
+       - [Session](#session-cookie)
+       - [Persistent](#persistent-cookie)
+       - [Third-Part](#third-part-cookie)
 
 # DNS
 DNS stands for Doamin Name System and help you to communicate with devices on the internet without remembering its IP Addresses. <br />
