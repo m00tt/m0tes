@@ -66,3 +66,141 @@ public class CopiaFileArgs {
 	}
 }
 ```
+
+## Esercizio 3: ListaDir
+- Se sulla linea di comando c’è un argomento lo interpreta come il nome di un file o di una directory; se sulla linea di comando non c’è alcun argomento, si assume come argomento la directory corrente.
+- Se l’argomento è il nome di un file, stampa a terminale il suo path assoluto e la sua dimensione in byte;
+- Se l’argomento è una directory, stampa a terminale il suo contenuto, cioè la lista dei file e delle directory che essa contiene.
+
+
+```java
+import java.io.File;
+
+public class ListaDir {
+	public static void main(String[] args) {
+		
+		File f;
+
+		if (args.length > 0) {
+			f = new File(args[0]);
+		} else {
+			
+			f = new File(System.getProperty("user.dir"));
+		}
+		
+		if (f.isFile()) {
+			System.out.println("Absolute path: " + f.getAbsolutePath());
+			System.out.println("Space: " + f.length() + " bytes");
+		} else if(f.isDirectory()) {
+			String[] lis = f.list();
+			for (int i=0; i<lis.length; i++) {
+				System.out.println(lis[i]);
+			}
+		} else {
+			System.out.println("Path non corretto.");
+		}
+	}
+}
+```
+
+## Esercizio 4: Analisi del Testo
+Scrivere una classe Testo che modelli un testo letto da un file e che fornisca i seguenti costruttori e metodi:
+- `public Testo(File file)`: Costruisce l’istanza dell’oggetto che modella il testo contenuto nel file specificato come argomento. Si assuma che l’argomento sia il riferimento ad un file di testo esistente.
+- `public int numeroParole()`: Restituisce il numero di parole che compaiono nel testo modellato dall’oggetto che esegue il metodo.
+- `public int numeroParoleDistinte()`: Restituisce il numero di parole distinte che compaiono nel testo modellato dall’oggetto che esegue il metodo.
+- `public int contaOccorrenzeParola(String daCercare)`: Restituisce il numero di occorrenze della parola specificata come argomento nel testo che esegue il metodo.
+- `public LinkedList<String> paroleDistinteInOrdineAlfabetico()`: Restituisce la lista delle parole del testo (senza ripetizioni) in ordine alfabetico.
+
+```java
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+
+public class Testo {
+	
+	static String text_import="";
+	
+	public Testo(File file) throws IOException {
+		if (!file.isFile()) {
+			System.out.println("Inserire il path ad un file valido.");
+			System.exit(0);
+		}
+		
+		FileReader fr = new FileReader(file);
+		BufferedReader br = new BufferedReader(fr);
+		String tmp;
+		while((tmp = br.readLine()) != null) {
+			text_import += tmp;
+		}
+		
+		System.out.print(text_import);
+		
+		br.close();
+		fr.close();
+	}
+
+	public static void main(String[] args) throws IOException {
+		
+		File f = new File(args[0]);
+		Testo t = new Testo(f);
+		
+		System.out.println("\nNumero di parole: " + t.numeroParole());
+		System.out.println("\nNumero di parole distinte: " + t.numeroParoleDistinte());
+		System.out.println("\nNumero di occorrenze di 'copia': " + t.contaOccorrenzeParola("copia"));
+		System.out.println(paroleDistinteInOrdineAlfabetico());
+		
+	}
+	
+	public int numeroParole() {
+		if (text_import == null || text_import.isEmpty()) { return 0; } 
+		
+		StringTokenizer tokens = new StringTokenizer(text_import); 
+		return tokens.countTokens();
+	}
+	
+	public int numeroParoleDistinte() {
+		if (text_import == null || text_import.isEmpty()) { return 0; }
+		
+		String[] words = text_import.split(" ");
+		ArrayList<String> listWithDuplicates = new ArrayList<>();
+		for(int i=0; i<words.length; i++) {
+			listWithDuplicates.add(words[i]);
+		}
+		ArrayList<String> listWithoutDuplicates = new ArrayList<>(new LinkedHashSet<>(listWithDuplicates));
+        
+        return listWithoutDuplicates.size();
+	}
+	
+	public int contaOccorrenzeParola(String search) {
+		if (text_import == null || text_import.isEmpty()) { return 0; }
+		
+		int count = 0;
+		
+		String[] words = text_import.split(" ");
+		for (int i=0; i<words.length; i++) {
+			if (search.equalsIgnoreCase(words[i])) {
+				count++;
+			}
+		}
+        return count;
+	}
+	
+	public static LinkedList<String> paroleDistinteInOrdineAlfabetico() {
+		
+		String[] words = text_import.split(" ");
+		LinkedList<String> listWithDuplicates = new LinkedList<>();
+		for(int i=0; i<words.length; i++) {
+			listWithDuplicates.add(words[i]);
+		}
+		LinkedList<String> listWithoutDuplicates = new LinkedList<>(new LinkedHashSet<>(listWithDuplicates));
+        Collections.sort(listWithoutDuplicates);
+        return listWithoutDuplicates;
+	}
+}
+```
