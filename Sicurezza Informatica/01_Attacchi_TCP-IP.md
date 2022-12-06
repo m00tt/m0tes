@@ -1,7 +1,7 @@
 # Introduzione
 
 ## Classi di indirizzo
-![Classi di indirizzo](assets/sicurezza_informatica/classi-indirizzo.png)<br>
+![Classi di indirizzo](/assets/sicurezza_informatica/classi-indirizzo.png)<br>
 Gli indirizzi IP vengono assegnati a classi di indirizzi IP.
 | Class | Netowrk Address | Host Address | Example Address |
 | ----- | --------------- | ------------ | --------------- | 
