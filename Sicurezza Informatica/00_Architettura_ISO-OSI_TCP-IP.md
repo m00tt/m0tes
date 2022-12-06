@@ -22,13 +22,13 @@ La rete è organizzata tramite una struttura layered (a strati).<br>
 # Modelli ISO/OSI e TCP/IP
 
 ## ISO/OSI Model VS TCP/IP Model
-![ISO/OSI vs TCP/IP](assets/sicurezza_informatica/model.png)
+![ISO/OSI vs TCP/IP](/assets/sicurezza_informatica/model.png)
 
 ### OSI Protocol Stack
-![OSI Protocol Stack](assets/sicurezza_informatica/osi-protocol-stack.png)
+![OSI Protocol Stack](/assets/sicurezza_informatica/osi-protocol-stack.png)
 
 ### Formato dei dati
-![Formato dei dati](assets/sicurezza_informatica/data-format.png)
+![Formato dei dati](/assets/sicurezza_informatica/data-format.png)
 
 ### TCP/IP Model Layer
 | Layer   | Layer Name           | Function                                                         | Protocols-Standards |
@@ -40,11 +40,11 @@ La rete è organizzata tramite una struttura layered (a strati).<br>
 
 ### Data Encapsulation
 Il processo di incapsulamento si verifica nel momento in cui un Computer (Host A) vuole inviare dati all’Host B, prima deve impacchettarli attraverso il cosiddetto processo di incapsulamento, aggiungendo Header, Trailer ed altre informazioni<br>
-![ISO/OSI Encapsulation](assets/sicurezza_informatica/iso-osi-encapsulation.png)<br>
-![TCP/IP Encapsulation](assets/sicurezza_informatica/tcp-ip-encapsulation.png)
+![ISO/OSI Encapsulation](/assets/sicurezza_informatica/iso-osi-encapsulation.png)<br>
+![TCP/IP Encapsulation](/assets/sicurezza_informatica/tcp-ip-encapsulation.png)
 
 ### Network Stack Security
-![Network Stack Security](assets/sicurezza_informatica/network-stack-security.png)
+![Network Stack Security](/assets/sicurezza_informatica/network-stack-security.png)
 
 ## Link Layer : Ethernet
 Caratteristiche del protocollo:
