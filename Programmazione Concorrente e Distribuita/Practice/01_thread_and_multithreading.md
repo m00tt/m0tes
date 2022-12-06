@@ -200,3 +200,47 @@ public class Es6 extends Thread {
 
 }
 ```
+
+## Esercizio 7
+Scrivere un programma in cui il main crea un thread che indefinitamente scrive “helo” sullo standard output, ogni mezzo secondo (approssimativamente).
+- Il main legge iterativamente da standard input. Quando legge «stop» 
+manda un segnale al thread
+- Il thread reagisce al segnale scrivendo «termino» e termina
+- Dopo la terminazione del thread, il main termina a sua volta
+```java
+public class Es7 extends Thread {
+
+	public static void main(String[] args) throws IOException, InterruptedException {
+		
+		Thread t = new Es7();
+		t.start();
+		
+		String input="";
+		while(!input.equalsIgnoreCase("stop")) {
+			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+			System.out.print("Write something (stop to finish): ");
+			input = in.readLine();
+		}
+		
+		t.interrupt();
+		t.join();
+		
+		System.out.println("main closed");
+	}
+	
+	public void run() {
+		while(true) {
+			try {
+				if(this.isInterrupted()) {
+					break;
+				}
+				sleep(500);
+				System.out.println("helo");
+			} catch (InterruptedException e) {
+				break;
+			}
+		}	
+		System.out.println("thread closed");
+	}
+}
+```
