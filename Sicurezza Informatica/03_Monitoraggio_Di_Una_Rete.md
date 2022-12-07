@@ -74,7 +74,7 @@ Esempi di filtri utilizzabili :
 | ------ | ----------- | 
 | ip.src == <address 1> | Monitorare per una certa sorgente |
 | ip.addr == <address 1> &&  ip.addr == <address 2> | Filtrare pacchetti che hanno determinati indirizzi IP |
-| tcp.port == <numero 1> (OR CON LE PIPE) tcp.port == <numero 2> | filtrare per una porta o per un altra |
+| tcp.port == <numero 1> \|\| tcp.port == <numero 2> | filtrare per una porta o per un altra |
 | tcp.dstport == <numero 1> | Filtrare porta di destinazione |
 
 Grazie ai filtri è possbile rendere più semplice l'analisi del traffico rete in live o a posteriori su un file di log salvato
