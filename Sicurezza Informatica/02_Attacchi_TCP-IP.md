@@ -244,7 +244,7 @@ Può anche essere utilizzano in modo dannoso :
 
 I packet sniffer possono essere sia software sia hardware
 
-## DoS by Connection Reset
+# DoS by Connection Reset
 Oltre all'IP Spoofing, durante gli scambi di dati del TCP è possibile effetuare un DoS (Denial Of Service) creando un pacchetto ad hoc di reset.<br>
 Non ci sono limitazioni se non creare il giusto pacchetto di reset, bisogna usare il sequence number valido e bisogna intromettersi nella comunicazione tra Alice e Bob e mandare un pacchetto di reset<br>
 Se un utente malintenzionato può indovinare il numero di sequenza corrente per unaconnessione esistente, può inviare il pacchetto di ripristino per chiuderla, particolarmente efficace contro la connessione di lunga durata, basta inviare pacchetto FIN.
