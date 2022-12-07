@@ -244,3 +244,29 @@ public class AssegnatoreConcorrente extends AssegnatoreSequenziale {
     }
 }
 ```
+
+## Cooperazione tra thread
+`synchronized` permette ad un thread di modificare in modo sicuro una risorsa. Ma spesso è necessario che un thread sappia quando tale risorsa è stata modificata. A tale scopo Java mette a disposizione i metodi `wait()`, `notify()` e `notifyAll()` della classe Object.
+
+<b>! </b>: Un thread può chiamare questi metodi su un oggetto solo quando detiene il lock di tale oggetto, cioè all’interno di un metodo/blocco `synchronized` sull’oggetto: chiamarli in un contesto diverso genera un’eccezione.
+
+### Metodo `wait()`
+`wait()` si utilizza quando un thread, dopo essere entrato in un'area `syncronized`, non ha le condizioni necessarie per proseguire e quindi deve attendere che esse si verifichino.<br>
+Un thread che esegue `wait()` viene messo in una <b>wait list</b> in attesa di essere risvegliato dai metodi `notify()` o `notifyAll()` che portano il thread in una <b>ready list</b>.
+
+```java
+synchronized (this) { // lock
+    try {
+        this.wait(); // unlock
+        // lock
+    } catch (InterruptedException e) {}
+} // unlock
+```
+
+### Metodi `notify()` e `notifyAll()`
+- Una chiamata `notify()` su un oggetto sposta un thread qualsiasi (scelto in modo non deterministico) dalla <b>wait list</b> alla <b>ready list</b>, rendendolo schedulabile
+- Invece, invocando `notifyAll()` su un oggetto si spostano tutti i thread dalla <b>wait list</b> alla <b>ready list</b>
+
+L'utilizzo di questi metodi dipende naturalmente dall'applicazione nel programma.
+
+## Monitor
