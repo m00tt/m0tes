@@ -270,3 +270,29 @@ synchronized (this) { // lock
 L'utilizzo di questi metodi dipende naturalmente dall'applicazione nel programma.
 
 ## Monitor
+Una struttura dati in cui tutti i metodi sono `synchronized` in modo che possa essere acceduta da un solo thread per volta, è detta `monitor`.
+
+## Problema produttore-consumatore
+- il thread <b>produttore</b> crea dati in una zona di memoria condivisa (_buffer_)
+- il thread <b>consumatore</b> preleva dati dal buffer
+- il buffer ha capacità limitata
+
+Bisogna quindi assicurare che il produttore non crei dati nel caso in cui il buffer sia pieno, ed il consumatore non prelevi dati quando il buffer risulta vuoto.
+
+## Deadlock
+Quando si gestisce una race condition, va evitato di generare una situazione di stallo o <b>deadlock</b>.<br>
+Una situazione di deadlock si verifica quando i thread si attendono l'uno con l'altro senza mai entrare nella zona critica.
+In questo modo si genera un'attesa in loop dove nessun thread ha mai accesso alla risorsa condivisa.
+
+Condizioni necessarie per affinché un deadlock si verifichi:
+- _mutal exclusion_: solo un thread per volta può avere accesso alla risorsa condivisa
+- _hold and wait_: esistono attività concorrenti che sono in possesso di alcune risorse, e intanto aspettano che si liberino altre risorse da acquisire.
+- _assenza di preemption sulle risorse_: una risorsa può essere rilasciata solo volontariamente da un’attività concorrente
+- _circular wait_: consiste nella creazione di una catena circolare in cui i thread restano tutti bloccati nell'attesa che una certa situazione si verifichi
+
+![Deadlock](/assets/programmazione_concorrente_e_distribuita/deadlock.png)
+
+### Come si evita il deadlock?
+- Deadlock prevention: si previene il verificarsi di deadlock, facendo in modo che almeno una delle quattro condizioni necessarie non si verifichi mai. (Soluzione consigliata)
+- Deadlock removal: non si previene il deadlock, ma lo si risolve quando ci si accorge che è avvenuto. Per esempio rendendo le risorse _preemptive_. (Soluzione più complessa)
+
