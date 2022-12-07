@@ -16,13 +16,14 @@ La netmask è una sequenza di 32 bit che identifica quali bit sono comuni negli 
 - Esempio: 159.149.30.0/24 
   - 24 bit per le sottoreti
   - 32-24 = 8 bit per gli host
-In generale il numero di host della sottorete è pari a 2^y - 2 (dove y è il numero di bit per host)
-<b>N.B.<b>= - 2 perché il primo e ultimo indirizzo di ogni rete non sono assegnabili ad alcun host, in quanto come indirizzo broadcast
-Altri esempi : 
-- 10/8 : 10.0.0.0 - 10.255.255.255
-- 172.16/12 : 172.16.0.0 - 172.16.255.255
+In generale il numero di host della sottorete è pari a 2^y - 2 (dove y è il numero di bit per host)<br>
+<b>N.B.</b>= - 2 perché il primo e ultimo indirizzo di ogni rete non sono assegnabili ad alcun host, in quanto come indirizzo broadcast<br>
 
-//add Image
+- Altri esempi : 
+  - 10/8 : 10.0.0.0 - 10.255.255.255
+  - 172.16/12 : 172.16.0.0 - 172.16.255.255
+
+![Netmask](/assets/sicurezza_informatica/netmask.png)<br>
 
 Indirizzo da 32 bit in notazione /23 -> i primi 23 bit di questo indirizzo sono fissi e gli altri 9 bit sono liberi e indirizzabili per smistare il traffico a ciascun host contenuto nella  particolare sottorete<br>
 Con la gestione delle maschere di sottorete possiamo più agevolmente smistare i pacchetti.<br>
@@ -63,7 +64,7 @@ richiesta ARP!
 - È possibile "avvelenare" una cache ARP inviando rispost ARP gratuite
 - L'uso di voci statiche(alcune entry siano statiche ovvero non cambiabili da messaggi ARP che viaggiano nella sottorete) risolve il problema ma è quasi impossibile da gestire (in rete dinamiche non risolve il problema e non è facile da gestire in quanto renderebbe statica la rete)
 
-//add Image
+![ARP Poisoning](/assets/sicurezza_informatica/ARP-Poisoning.png)<br>
 
 Da un lato abbiamo la macchina A :
 - con IP : 192.168.1.1 
@@ -74,7 +75,7 @@ A destra abbiamo la macchina B :
 Queste due macchine devono parlarsi tra di loro, nel momento in cui hanno bisogno di scambiare i dati, ciascuna macchina nella propria Cache manterrà l'associazione.<br>
 Cosa può fare un attaccante?
 
-//add Image
+![ARP Poisoning2](/assets/sicurezza_informatica/ARP-Poisoning-2.png)<br>
 
 L'attacante è la macchina C :
 - con indirizzo IP : 162.166.1.106
