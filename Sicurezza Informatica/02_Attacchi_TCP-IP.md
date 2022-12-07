@@ -36,30 +36,223 @@ I due protocolli del livello di trasporto utilizzati in internet sono :
 - TCP : Transmission Control Protocol 
 - UDP : User Datagram Protocol : Maggiore velocità ma non ha le garanzie del TCP, si potrebbero perdere pacchetti
 
-//add Image
+| Application | Application Layer Protocol | Protocollo di trasposrto sottostante |
+| -----------  | ------------------------- | ------------------------- |
+| e-mail | SMTP | TCP |
+| remote terminal access | Telnet | TCP |
+| Web | HTTP | TCP |
+| File Transfer | FTP | TCP |
+| Straming Multimedia | HTTP, RTP | TCP or UDP |
+| Internete Telephony | SIP, RTP | tipically UDP |
 
 ## TCP Packet
-//add Image
+![TCP Packet](/assets/sicurezza_informatica/TCP-Packet.png)<br>
 
 
 ## TCP Flag
 | FLAG | Spiegazione |
 | ---- | ----------- | 
-| SYN  |richiesta di connesione, sempre il primo pacchetto di una comunicazione |
-| FIN  | indica l'intenzione del mittente di terminare la sessione in maniera concordata |
-| ACK  | conferma del pacchetto precedente |
-| RST  | reset della sessione |
-| PSH  | operazione di push, i dati che vengono inviati al destinatario non dovrebbero essere bufferizzati |
-| URG | dati urgenti che vengono inviati con precedenza sugli altri |
+| SYN  | Richiesta di connesione, sempre il primo pacchetto di una comunicazione |
+| FIN  | Indica l'intenzione del mittente di terminare la sessione in maniera concordata |
+| ACK  | Conferma del pacchetto precedente |
+| RST  | Reset della sessione |
+| PSH  | Operazione di push, i dati che vengono inviati al destinatario non dovrebbero essere bufferizzati |
+| URG | Dati urgenti che vengono inviati con precedenza sugli altri |
 
 ## TCP Handshake
 Le connessioni TCP vengono stabilite tramite un handshake a 3 vie.
 
-//add Image (internet)
+![3 Way Handshake](/assets/sicurezza_informatica/3-Way-Handshake.png)<br>
+
 
 - Il server ha generalmente un listener passivo, in attesa di una richiesta di connessione
 - Il client richiede una connessione inviando un pacchetto SYN
 - Il server risponde inviando un paccheto SYN/ACK, indicando un riconoscimento per la connesione
 - Il client risponde inviando un ACK al serer stabilendo così la connessione
 
-2.23
+### Spedizione Dati
+
+Dopo aver fatto l'handshake comincia la spedizione dei dati:<br>
+![Spedizione Dati](/assets/sicurezza_informatica/Spedizione-Dati-After-3Way.png)<br>
+1. A spedisce a B 100 byte
+   1. Primo byte ha come numero di sequenza 1000
+   2. B conferma la ricezione dei byte ricevuti in precedenza fino al 4999 ed indica che si aspetta che il prossimo byte trasmesso sia quello con numero di sequenza 5000, inoltre incremente il numero di ack di 100 byte (dati ricevuti) : seq-num precedente + dati = 1000+100
+2. B spedisce ad A 250 byte
+   1. Primo byte ha come numero di sequenza 5000
+   2. A conferma la ricezione dei byte ricevuti in precedenza fino al 1099 ed indica che si aspetta che il prossimo byte trasmesso sia quello con numero di sequenza 1100, inoltre incrementa il numero di ack di 250 = seq-num precedente + dati = 5000 + 250
+3. A spedisce a B 150 byte
+   1. Primo byte ha come numero di sequenza 1100
+   2. B conferma la ricezione dei byte ricevuti in precedenza fino
+al 5249 si aspetta che il prossimo byte trasmesso sia quello con numero di sequenza 5250.
+4. B non ha dati da spedire, si limita solo a confermare i
+dati ricevuti. Questo pacchetto non verrà confermato
+in quanto non contiene dati
+
+### TCP Data Transfer
+Durante l'inizializzazione della connesione utilizzando l'handshake a tre vie, vengono scambiati i numeri di sequenza inziali.<br>
+L'intestazione TCP include un checksum a 16 bit dei dati e di parti dell'intestazione, incluse l'origine e la destinazione.
+- Il riconoscimento o la sua mancanza viene utilizzato da TCP per tenere traccia della confestione della rete e del flusso di controllo.
+- Le connessioni TCP vengono terminate in modo pulito con un handshake a 4 vie
+  - Il client : che desidera terminare la connessinoe invia un messaggio di FIN al server
+  - Il server : risponde inviando un ACK
+  - Il server : invia un FIN
+  - Il client : invia un ACK e la connessione viene terminata
+
+![Chiusura Connesione TCP](/assets/sicurezza_informatica/Chiusura-Connessione-TCP.png)<br>
+
+## Problemi intrinsici in TCP/IP
+- Non c'è autenticatione fra le parti, chiunque può fingersi Alice o Bob e intromettersi nel protocollo dato che chiede solo l'indirizzo IP del destinatario e del mittente
+- I controlli d'integrità sono banali
+- Si difende la disponibilità della rete dalla congestione, ma non la possibilità di connettersi ad un determinato noto
+
+# IP Spoofing
+L'IP Spooging è un tentativo da parte di un intruso di inviare pacchetti da un indirizzo IP che sembrano provenire da un altro. 
+- Il campo SRC dello header IP è falsificabile senza particolare difficoltà.<br>
+
+Le autenticazioni locali su indirizzi IP sono insicure, sopratutto all'interno di una rete locale.<br>
+Fra l'altro la presenza di indirizzi IP duplicati può causare Denial Of Service.<br>
+Dal punto di vista dell'attaccante : 
+- Se l'IP sorgente è falso le risposte andranno al vero noto titolare (Attaccante spoofa IP di Alice, invia un pacchetto, ma la risposta arriva ad Alice)
+- Spoofare l'IP non è sufficiente per iniziare una connessione TCP
+
+## TCP Connection Spoofing
+Ogni connessione TCP ha uno stato associato
+- Numero di sequenza, numero di porta
+
+Lo stato del TCP è facile da indovinare
+- Numeri di porta sono standard e i numeri di sequenza prevedibili
+
+Si possono iniettare pacchetti in connessioni esistenti
+- Se l'aggressore conosce il numero di sequenza iniziale e la quantità di traffico, può indovinare probabilmente il numero corrente
+- Indovinare un numero di seuqenza a 32 bit non è pratico MA
+  - La maggior parte dei sistemi accetta grandi finestre di numeri di sequenza (per gestire le perdite dei pacchetti), quindi invia un flusso di pacchetti con proabili numeri di sequenza
+
+## Initial Sequence Number
+Intorno agli anni 80/90 si è visto che nei documenti standard RFC793 l'ISN (Initial Sequence Number) va incrementato circa 1 volta ogni 4 microsecondi per evitare confusioni con connessioni duplicate.<br>
+In realtà i sistemi operativo non implenetarono questo standard correttamente e quindi prendevano dei sequence number abbastanza prevedibili (prendevano un vecchio sequence number e lo implementava di una certa quantità) = punto debole che l'attaccante poteva sfruttare.<br>
+Quindi sono state rilasciate nuovi standard dove:
+- ISN = M + FS dove:
+  - M : contatore incrementato ogni 4 microsecondi
+  - FS : funzione Hash che prende in Input (Indirizzo IP Mittente, Porta Mittente ; Indirizzo IP Destinazione, Porta Destinazione )
+
+## Forme di IP spoofing
+Esistono due forme base di IP spoofing:
+- Blind Spoofing
+  - Attacca da qualsiasi fonte - non sono in grado di vedere le risposte che il destinatario sta rilasciando
+- Non-Blind Spoofing
+  - Attacca dalla stessa sottorete - vedo in maniera dettagliata cosa succede, posso intercettare tutti i pacchetti
+
+### Blind Spoofing
+<b>Goal:</b> cercare d'impersonare un host qualcunque su internet, non facente parte della sottorete in cui si trova.<br>
+<b>Blind:</b> l'attaccante non ha nessuna possibilità di vedere i pacchetti mandati in risposta ai pacchetti spoofati che ha spedito<br>
+- Questi utlimi infatti saranno indirizzati all'host che egli sta impersonando, impedendogli quindi di venire a conoscenza di ACK number e Sequence number corretti per continuare la connesione
+
+Alcuni server danno un accesso privilegiato a degli host fidati
+- Esempio : rlogin senza password o servizi simili
+- Controllo fatto sul numero IP sorgente della connessione
+
+Se un attaccante riuscisse ad aprire una connessione spoofando il proprio IP potrebbe lanciare dei comandi al server facendogli credere di essere l'host dato
+
+#### Attacco Blind
+L'attacci su sviluppa in più fasi :
+1. L'attaccante avrà una fase di ricognizione per cercare di capire tutte le caratteristiche della macchina che si vuole spoofare.<br>
+Alice e bob stanno aprendo una connesione potenzialmente attaccabile, l'attacante può capire come si comporta Alice, quindi quali sono le caratteristiche con la quale vengono gestite ACK number e Sequence number
+2. L'attaccante provocherà un attacco di SYN flood verso Bob mettendolo fuori uso
+3. L'attaccante s'intrometterà nella connessione creato paccheti spoofati con l'indirizzo di Bob (quindi impersonando Bob)
+
+Il protocollo TCP/IP richiede che i numeri di "Acknowledgement" vengano inviati attraverso le sessioni
+- Si assicura che il client riceva i pacchetti del server e viceversa
+- È necessario disposrre della giusta sequenza di numeri di riconoscimento per falsificare un'identità IP
+
+#### IP Spoofing
+Lo spoofing IP consiste in diversi passaggi e utilizza sia
+lo spoofing dell'indirizzo IP che la previsione del numero di sequenza TCP.<br>
+Con l'aiuto della tecnica di previsione del numero di sequenza TCP, un hacker potrebbe parlare con un demone rlogin anche senza dover ricevere il numero di sequenza del server restituito con una stretta di mano a tre vie.
+
+<b> Normal Remote Login Session : </b>
+| Route | Operation |
+| ----- | --------- |
+| C->S  | SYN (ISNc)|
+| S->C  | SYN (ISNc), ACK (ISNc) |
+| C->S  | ACK (ISNc)|
+| C->S  | data      |
+| S->C  | data      |
+
+<b> Spoofed Attack : </b>
+| Route | Operation | Spiegazione |
+| ----- | --------- | ----------- |
+| X->S  | SYN (ISNx), SRC = C| L'attaccante per intromettersi deve creare il pacchetto spoofato nel quale il sorgente è il client (SRC = C) e deve inserire anche il giusto sequence number |
+| S->C  | SYN (ISNc), ACK (ISNx) | Quando il server vede la richiesta, il server produrrà un pacchetto destinato al client, <b> NON VISIBILE DALL'ATTACCANTE </b> | 
+| X->S  | ACK (ISNc), SRC = C| L'attaccante deve creare una risposta ACK da inviare al server per la confermare la ricezione del pacchetto prima (<b> L'attaccante non ha visto quel pacchetto </b>) |
+| X->S  | ACK (ISNc), SRC = C, nasty-data | Attaccante continua la comunicazione inviando codice malevolo |
+
+#### IP Spoofing Steps
+1. Viene scelto un host vittima e viene studiato il comportamente, come ad esempio di quali host la vittima si fida
+2. Dopo aver individuato l'host attendibile, esso viene disabilitato, probabilmente da SYN flooding per arrestare la macchina o bloccare tutto il normale traffico di rete, questo perché se la macchina fidata riceve dei pacchetti non voluti essa risponderò con pacchetti RST (reset)
+3. Successivamente,  un normale pacchetto di richiesta di connessione TCP viene inviato all'host vittima e si ottiene un numero di sequenza valido dall'host vittima, un attaccante potrebbe indovinare qual'è il prossimo numero di sequenza
+4. L'attaccante invia quindi un pacchetto SYN con l'host attendibile come indirizzo IP di origine.
+Anche se il pacchetto SYN_ACK restituito dall'host vittima non è
+riuscito a raggiungere l'attaccante, può comunque continuare la connessione inviando il messaggio ACK finale con il numero di sequenza corretto generato dal passaggio precedente.
+
+<b> Se l'attaccante non è riuscito a mettere fuori uso la macchina fidata : </b>
+
+5. Il pacchetto SYN_ACK restituito andrà al vero host C
+6. l'host C risponderà immediatamente con un pacchetto RST e l'attacco fallirà perché la connessione prevista verrà interrotta non appena l'host vittima avrà ricevuto questo pacchetto.
+
+Pertanto, un attacco SYN flooding viene sempre eseguito come primo
+passaggio in "IP Spoofing"
+
+#### ISN Prediction
+In questo tipo di attacco l'attaccante non si trova nella stessa rete della vittima quindi anche se può inviare pacchetti spoofati (si può tentare di instaurare connessioni con il server) apparendo la vittima, tutti i pacchetti di risposta saranno inviati alla vittima e l'attaccante non può intercettarli facilmente. Inoltre non conoscendo le risposte dal server non si possono calcolare i sequence number e quindi proseguire il dialogo. Per aggirare questo problema si può tentare di predire il sequence number del server (TCP sequence prediction attack).
+L'attaccante manda qualche pacchetto SYN non spoofato per vedere e analizzare le risposte del server, come ad esempio
+- Regola dei 64k :  che consiste nell'aumentare ad ogni secondo di una certa costante il sequence number (rispetto a quello utilizzato per la connessione precedente) e aggiungere un altro numero costante se si cambia la connessione
+- Campionamenti su una serie di pacchetti
+- Aumentando di una costante il sequence number a ogni intervallo di tempo prefissato
+- Differenza tra i vari tempi registrati ottenendo l'intervallo di tempo trascorso tra due generazioni del ISN
+- Divisione tra il risultato ottenuto e la differenza tra ISN per ottenere l'incremento per ogni unità di tempo
+
+L'attaccante non ha la sicurezza matematica di essere riuscito ad aprire la connesione<br>
+Esempio se stava cercando di aprire una connessione con il servizio rlogin non gli sarà richiesta nessuna password per entrare e con tutta probabilità quindi avrà accesso ad una shell.<br>
+Il passo successivo solitamente sarà quello di inviare il comando : 
+
+``` bash
+echo "+ +" > .rhosts
+```
+che consente di aggiugere una riga nel file .rhosts e questo significa che rende possibile l'accesso al sistema vittima senza password a chiunque faccia un tentativo di rlogin
+
+### Non-Blind IP Spoofing
+IP Spoofing senza conoscere intrinsecamente lo schema della sequenza di riconscimento
+- Fatto nella stessa sottorete
+- Utilizzare uno sniffer di pacchetti per analizzare lo schema della sequenza
+
+Basta utilizzare uno sniffer per vedere cosa sta succedendo, e quindi capire quali sono i sequence number, si ha una visione aperta sul traffico, grazie a questo il creare pacchetti spoofati risulta molto più facile.<br>
+Si utilizzano sniffer di pacchetti per analizzare lo schema della sequenza, i packet sniffer intercettano i pacchetti di rete, alla fine decodifica e analizza i pacchetti inviati attraverso la rete e determinare il modello della sequenza di riconoscimento dai pacchetti. Con queste informazioni è possibile inviare messaggi al server con l'indirizzo IP del client effettivo e con un numero di riconoscimento sequenziato validamente. 
+
+#### Sniffer
+I packet sniffer "leggono" le informazioni che attraversano una rete
+- I packet sniffer intercettano i pacchetti di rete, possibilmente utilizzando il poisoning della cache ARP
+- Possono essere utilizzati come strumento legittimo per analizzare la rete
+
+I packet sniffer permettono di :
+- Monitorare l'utilizzo della rete
+- Filtrare il traffico di rete
+- Analizzare i problemi di rete
+
+Può anche essere utilizzano in modo dannoso : 
+- Rubare informazioni (come ad esempio password, conversazioni, ecc)
+- Analizzare informazioni di rete per prepare un attacco
+
+I packet sniffer possono essere sia software sia hardware
+
+## DoS by Connection Reset
+Oltre all'IP Spoofing, durante gli scambi di dati del TCP è possibile effetuare un DoS (Denial Of Service) creando un pacchetto ad hoc di reset.<br>
+Non ci sono limitazioni se non creare il giusto pacchetto di reset, bisogna usare il sequence number valido e bisogna intromettersi nella comunicazione tra Alice e Bob e mandare un pacchetto di reset<br>
+Se un utente malintenzionato può indovinare il numero di sequenza corrente per unaconnessione esistente, può inviare il pacchetto di ripristino per chiuderla, particolarmente efficace contro la connessione di lunga durata, basta inviare pacchetto FIN.
+
+
+
+
+
+
+
+
