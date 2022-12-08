@@ -249,6 +249,137 @@ Oltre all'IP Spoofing, durante gli scambi di dati del TCP è possibile effetuare
 Non ci sono limitazioni se non creare il giusto pacchetto di reset, bisogna usare il sequence number valido e bisogna intromettersi nella comunicazione tra Alice e Bob e mandare un pacchetto di reset<br>
 Se un utente malintenzionato può indovinare il numero di sequenza corrente per unaconnessione esistente, può inviare il pacchetto di ripristino per chiuderla, particolarmente efficace contro la connessione di lunga durata, basta inviare pacchetto FIN.
 
+# TCP Session Hijacking
+Un'attaccante può fare un Session Hijacking ovverò può intereccettare e dirottare la comunicazione, fingendosi un'altra persone (IP SPOOFING) può inserirsi in una comunicazione lecita e provocare malfunzionamenti.<br>
+- L'attaccante contatta il bersaglio (il server) con un SYN e quest'ultimo risponde con un SYN/ACK : metodo utilizzato per capire le caratteristiche del server come ad esempio il server crea il Sequence Number.
+- Hijacking : attaccante manda un indirizzo spoofato al server (manda un pacchetto con un indirizzo che non è il suo, quindi impersonando A) il server risponderà con SYN/ACK ad A.
+- Se l'attaccante è in grado di capire qual'è l'evenetuale risposta del server (l'attaccante non la vede perché va verso l'host spoofato) può creare un messaggio di risposta da parte dell'indirizzo spoofato verso il server e poi inviare payload dannoso in quanto è stato concluso il 3-Way-Handshake
+
+// add Image
+
+# ACK Storm
+Gli attacchi ACK Storm si basano sul fatto che nel specifiche del procotollo tcp è scritto 
+- Quando si riceve un pacchetto con ACK più grande di quello inviato dal client ricevente
+- Il client deve inviare nuovamente l'ultimo pacchetto ACK inviato all'altro lato e scartare quello ricevuto.
+
+L'attacco base consiste in:
+- Preleva un pacchetto da una connessione TCP tra un client e un server
+- Genera due pacchetti, ciascuno indirizzato a una parte e con l'indirizzo del mittente dell'altra parte (cioè contraffatto)
+  - I pacchetti devono essere all'interno delle finestre TCP di entra,bi i lati
+  - I pacchetti dovrebbero avere almeno un byte di dati
+- Inviare i pacchetti contemporanemante al client e al server
+
+La connessione entrerà quindi in un ciclo infinito di invio di pacchetti ack avanti e indietro tra entrambe le parti
+
+//add Image
+
+- A accetta pacchetti con SEQ = 1000 e ACK = 2000
+- B accetta pacchetti con SEQ = 2000  e ACK = 1000
+- Eve (il nemico) manda un pacchetto sbagliato sia ad Alice che a Bob di 10 byte (impersonando Alice e Bob)
+- Il contatore di ACK viene incrementato di 10 in quanto il pacchetto contiene 10 byte
+- Alice e Bob si disallinenao, in quanto quando i pacchetti arrivano a destinazione contengono un ACK superiore al sequence number (B riceve ack 2010 ma ha seq 200, A riceve 1010 ma ha seq 1000)
+- Alie e Bob secondo lo standard inviano quidni l'ultimo ACK inviato da loro, creando cosi un loop
+
+Punti chiave:
+- L'iniezione di pacchetti avviene in una sessione attiva
+- I pacchetti falsificati inviati devono essere ricevuti sia dal client che dal server, rientrando nella finestra di congestione TCP di entrambi
+- Quando la connesione tra client e server è inattiva, i numeri di sequenze rimangono gli stess
+- Quando si trasferiscono file di grandi dimensioni su TCP, la finestra di congestione TCP diventa grande
+- L'attaccante deve conoscere l'IP esterno e la porta che il NAT assegna al computer interno quando accede a Internet
+
+Contromisure
+- Per prevenire attacchi di ACK Storm è necessaria una piccola modifica nell'implementazione (o standard) TCP
+- Quando si riceve un pacchetto contente un campo ACK superiore al numero di sequenza del destinatario il pacchetto deve essere scartato e non deve essere inviata alcuna risposta
+- L'utilizzo di una rete wirless crittografata come standard ridurrà in modo significativo le capacità di intercettazione
+- Il filtraggio degli ACK duplicati TCP può neutralizzare i due pacchetti
+
+# DoS Attack
+Goal : Escludere un nodo o un servizio (con il minimo sforzo possibile)<br>
+- "Amplification Attack"
+  - La quantità di dati generati dall'attaccante è inferiore a quella che colpisce la vittima.<br>
+  - In genere sono due i tipi di attacchi basati sull'amplificazione:
+  - DoS Bug
+    - Difetto di progettazione
+  - DoS Flood
+    - Si usano delle bot-net
+- "Reflection attack"
+  - Un attaccante, invece di colpire diretamente la vittima, dirige il suo traffico verso un host intermedio(reflector) e poi questo lo dirige verso la vittima.
+  - Nell'IP Spoofing l'attaccante genera un pacchetto con l'indirizzo sorgente della vittima e lo manda al server che agisce da reflector
+    - A causa dello spoofing, la risposta andrà alla vittima
+    - La vittima quindi riceverà pacchetti provenienti dal reflector e non riuscirà a risalire all'attaccante vero
+
+## ACK Reflection Attack
+//add Image video <br>
+
+- Il pacchetto TCP SYN verso il reflector con IP source della vittima
+- Il reflector risponde con SYN/ACK
+- La vittima verrà quindi inondata di apcchetti TCP fuori sequenza provenienti da un server web pulito
+  - Non c'è modo di distinguere i SYN spoofati dai SYN reali e quindi non c'è modo, per il reflector, di proteggersi
+- Semplicemente il SYN generator genera tanti pacchetti SYN Spoofati(tutti con l'IP della vittima) diretti a diversi server web, quando il server vede arrivare un SYN risponde con SYN/ACK alla vittima, quindi, quest'ultima viene inondata di SYN/ACK, questo provoca un backscatter<br>
+Backscatter(radiazione di ritorno)
+- La vittima riceve TCP SYN con IP sorgenti diversi (spoofati)
+- La vittima risponde normalmente con dei pacchetti, ciascuo ad ogni IP sorgente ricevuto
+  - Backscatter (anche nelle mail indica la ricezione, talvolta massiva, di messaggi di rimbalzo a seguito di eventi connessi allo spam)
+
+
+## TCP SYN Flood
+Un attacco di SYN Flood è un inondazione di pacchetti SYN verso un determinato target, ovvero un servizio di rete che deve essere disponibile ma che dopo questo attacco inizierà a rifiutare nuove connessioni e quindi passa in uno stato di "non-disponibile".<br>
+Un server web sta in ascolto sulla porta 80 in attesa di connessioni, l'attaccante genera tantissimi SYN con indirizzo spoofato (casuale) e tutti questi pacchetti hanno come destinazione la porta 80 di quel server che sto attaccando.<br>
+La cosa di backlog del server si riempe e a una certa esaurisce lo spazio disponibile per raccogliere i vari SYN e non risponde più, quindi rifiuta altre connessioni<br>
+Questo è un esempio di DoS Bug
+
+### Scenari di attacco e parametri
+Gli attacchi di SYN Flood sono di diversa natura
+//add Image <br>
+- Attacchi diretti : Attaccante attacca direttamente la vittima mandano pacchetti SYN e SYN/ACK
+- Attacchi con indirizzo spoofato : attaccante crea un certo numero di pacchetti con indirizzi cambiati, causali
+- Attacchi distribuiti : Grazie all'utilizzo di BotNet o dei server che possono essere controllati dall'attaccando facendo attacchi di SYN Flood verso la vittima
+
+Affinché l'attacco sia efficace devo conoscere il sistema operativo della vittima e le sue caratteristiche (esempio la dimensione della backlog utilizzata, ecc)<br>
+
+### Contro Misure
+- Aumentare il TCP della Backlog
+- Ridurre il tempo di time-out dei SYN-RECEIVED
+- SYN Cache
+- SYN Cookies (Soluzione Migliore)
+
+## Prevenzione dell'attacco DoS
+DoS è causato da uno stato di allocazione simmetrico
+- Il server apre un nuovo stato ad ogni richiesta di connessione.
+
+Idea : postporre lo stato<br>
+Cookies permetto al ricevente di rimanere stateless finche l'initiator produce almeno due messaggi
+- Lo stato è memorizzato in un cookie (IP Addresses e Porte) e mandato all'initiator
+- Se l'initiator risponde, il cookie viene rigenerato e comparato col cookie restituito dall'initiator
+
+## SYN Cookies
+//add Image
+Client manda SYN <br>
+Il server quando manda SYN e ACK calcola un determinato valore tramite una funzione Hash (quella verde nella foto) se la connessione è legittima (ovvero se c'è un client legittimo) mi risponderà Cookie + 1 <br>
+A quel punto il server farà i suoi controlli sul cookie e solo in questo caso allora la connesione è valida.<br>
+
+Idea : usare una chiave segreta 
+- Il server risponde al client con il cookie SYN/ACK che ha i seguenti campi:
+  - T = Contatore a 5 bit incrementato ogni 64 secondi
+  - L = MAC(key) (Source Addr, Source Port, Destination Addr, Destination Port, Sequence Number Client, T)
+- Client onesto risponderà :
+  - ACK(AN = Sequence Number Server, SN = Sequence Number Client +1)
+- Tramite questo ACK il server può ricostruire tutte le informazioni che contiene il SYN/ACK che ha mandato prima al client e vedo se tutto corrisponde, se positivo allora il server alloca lo spazio
+
+1.06
+
+## Altra contromisura
+Se la SYN queue è piena, si può cancellare a caso una delle query
+- Le connessioni legettime hanno una chance di essere completate
+- Fake Addr satanno eventualmente cancellati
+
+## Prolexic Proxy
+
+  
+
+
+
+
 
 
 
