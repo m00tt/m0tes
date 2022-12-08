@@ -240,3 +240,213 @@ public class Consumer extends Thread {
 }
 ```
 
+# Buffer FIFO
+Solitamente, il buffer usato dai produttori e consumatori ha dimensioni maggiori di uno, e gli elementi vengono consumati nello stesso ordine in cui sono prodotti. Per memorizzare gli elementi, serve allora una coda (cioè un buffer FIFO, First In First Out).
+
+```java
+public class Main {
+
+	public static final int BUFFER_SIZE = 5;
+	public static Semaphore mutex = new Semaphore(1);
+	public static Semaphore empty = new Semaphore(BUFFER_SIZE);
+	public static Semaphore full = new Semaphore(0);
+	
+	public static void main(String[] args) {
+		
+		Shared s = new Shared(BUFFER_SIZE);
+		new Producer(s);
+		new Producer(s);
+		new Consumer(s);
+		new Consumer(s);	
+	}	
+}
+
+public class Shared {
+	
+	private final int BUFFER_SIZE;
+	private int numItems = 0;
+	private int[] values;
+	private int first = 0;
+	private int last = 0;
+	
+	public Shared(int buffer) {
+		BUFFER_SIZE = buffer;
+		values = new int[BUFFER_SIZE];
+	}
+
+	public int getItems() throws InterruptedException {
+		Main.mutex.acquire();
+		if (numItems == 0) {
+			System.err.println("Buffer vuoto");
+			System.exit(0);
+		}
+		numItems--;
+		int tmp = values[first];
+		first = (first+1) % BUFFER_SIZE;
+		System.out.println("Get: " + tmp);
+		Main.mutex.release();
+		return tmp;
+	}
+
+	public void setItems(int v) throws InterruptedException {
+		Main.mutex.acquire();
+		if(numItems == BUFFER_SIZE) {
+			System.err.println("Buffer pieno");
+			System.exit(1);
+		}
+		numItems++;
+		values[last] = v;
+		last = (last+1) % BUFFER_SIZE;
+		System.out.println("Set: " + v);
+		Main.mutex.release();
+	}
+}
+
+public class Producer extends Thread {
+	
+	Shared shared;
+	
+	public Producer(Shared s) {
+		shared = s;
+		start();
+	}
+	
+	public void run() {
+		for(int i=0; i<10; i++) {
+			try {
+				Main.empty.acquire();
+				shared.setItems(i);
+			} catch (InterruptedException e) {
+				break;
+			}
+			Main.full.release();
+		}
+	}
+}
+
+public class Consumer extends Thread {
+
+	Shared shared;
+	
+	public Consumer(Shared s) {
+		shared = s;
+		start();
+	}
+	
+	public void run() {
+		for(int i=0; i<10; i++) {
+			try {
+				Main.full.acquire();
+				shared.getItems();
+			} catch (InterruptedException e) {
+				break;
+			}
+			Main.empty.release();
+		}
+	}
+}
+```
+
+## BlockingQueue
+Esiste un'apposita struttura dati chiamata corrispondente all'interfaccia `java.util.concurrent.BlockingQueue`. In particolare, si tratta di una struttura dati FIFO (appunto, una coda) thread-safe, che è in grado di mettere in attesa (bloccare) un produttore che cerca di inserire quando la coda è piena, o un consumatore che cerca di prelevare un valore quando questa è vuota, e può anche essere usata con produttori/consumatori multipli.
+
+BlockingQueue è un’interfaccia, per usarla bisogna scegliere una delle sue
+implementazioni. Alcune delle principali sono:
+1. `ArrayBlockingQueue`: memorizza gli elementi in un array, e ha una capacità
+limitata;
+2. `LinkedBlockingQueue`: memorizza gli elementi in una linked list, con capacità
+illimitata o, opzionalmente, limitata.
+
+### Metodi
+Esistono varie tipologie di metodi divisi per la loro funzione e per il valore di ritorno, qui sotto è presente uno schema:
+
+| Funzione  | Eccezione | Valore speciale           | Blocca | Timeout              |
+| --------- | --------- | ------------------------- | ------ | -------------------- |
+| Inserisci | add(e)    | offer() - `false`         | put()  | offer(e, time, unit) |
+| Rimuovi   | remove()  | poll() - `null`           | take() | poll(time, unit)     |
+| Esamina   | element() | peek() - `null`           |        |                      |
+
+Nel caso del problema del produttore e consumatore, fanno al caso i metodi
+
+```java
+public void put(E e) throws InterruptedException;
+public E take() throws InterruptedException;
+```
+
+### Applicazione nel problema dei produttori-consumatori
+Si vuole simulare lo scambio di messaggi tra produttore e consumatore.
+
+```java
+public class Message {
+	private final String msg;
+	
+	public Message(String msg) {
+		this.msg = msg;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+}
+
+public class Main {
+
+	public static void main(String[] args) {
+		BlockingQueue<Message> queue = new ArrayBlockingQueue<Message>(10);
+		new Producer(queue);
+		new Consumer(queue);
+	}
+}
+
+public class Producer extends Thread {
+	BlockingQueue<Message> queue;
+	
+	public Producer(BlockingQueue<Message> q) {
+		queue =  q;
+		start();
+	}
+	
+	public void run() {
+		for(int i=0; i<100; i++) {
+			try {
+				Message msg = new Message(String.valueOf(i));
+				queue.put(msg);
+				System.out.println("Set: " + i);
+			} catch (Exception e) {
+				break;
+			}
+		}
+		
+		try {
+			Message msg = new Message("stop");
+			queue.put(msg);
+		} catch (InterruptedException e) { }
+		System.out.println("Producer stops");
+	}
+}
+
+public class Consumer extends Thread {
+	
+	BlockingQueue<Message> queue;
+	
+	public Consumer(BlockingQueue<Message> q) {
+		queue = q;
+		start();
+	}
+	
+	public void run() {
+		for(int i=0; i<100; i++) {
+			try {
+				Message msg = queue.take();
+				if (msg.getMsg().equalsIgnoreCase("stop")) {
+					break;
+				}
+				System.out.println("Get: " + msg.getMsg());
+			} catch (Exception e) {
+				break;
+			}
+		}
+		System.out.println("Consumer stops");
+	}
+}
+```
