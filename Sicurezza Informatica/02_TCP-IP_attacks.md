@@ -255,7 +255,7 @@ Un'attaccante può fare un Session Hijacking ovverò può intereccettare e dirot
 - Hijacking : attaccante manda un indirizzo spoofato al server (manda un pacchetto con un indirizzo che non è il suo, quindi impersonando A) il server risponderà con SYN/ACK ad A.
 - Se l'attaccante è in grado di capire qual'è l'evenetuale risposta del server (l'attaccante non la vede perché va verso l'host spoofato) può creare un messaggio di risposta da parte dell'indirizzo spoofato verso il server e poi inviare payload dannoso in quanto è stato concluso il 3-Way-Handshake
 
-// add Image
+![TCP Session Hijacking](/assets/sicurezza_informatica/tcp-session-hijacking.png)
 
 # ACK Storm
 Gli attacchi ACK Storm si basano sul fatto che nel specifiche del procotollo tcp è scritto 
@@ -271,7 +271,7 @@ L'attacco base consiste in:
 
 La connessione entrerà quindi in un ciclo infinito di invio di pacchetti ack avanti e indietro tra entrambe le parti
 
-//add Image
+![ACK Storm](/assets/sicurezza_informatica/ack-storm.png)
 
 - A accetta pacchetti con SEQ = 1000 e ACK = 2000
 - B accetta pacchetti con SEQ = 2000  e ACK = 1000
@@ -309,7 +309,8 @@ Goal : Escludere un nodo o un servizio (con il minimo sforzo possibile)<br>
     - La vittima quindi riceverà pacchetti provenienti dal reflector e non riuscirà a risalire all'attaccante vero
 
 ## ACK Reflection Attack
-//add Image video <br>
+![ACK Reflection Attack](/assets/sicurezza_informatica/reflection-attack.png)
+
 
 - Il pacchetto TCP SYN verso il reflector con IP source della vittima
 - Il reflector risponde con SYN/ACK
@@ -330,7 +331,7 @@ Questo è un esempio di DoS Bug
 
 ### Scenari di attacco e parametri
 Gli attacchi di SYN Flood sono di diversa natura
-//add Image <br>
+![Scenari di attacco e parametri](/assets/sicurezza_informatica/scenari-attacco-parametri.png)
 - Attacchi diretti : Attaccante attacca direttamente la vittima mandano pacchetti SYN e SYN/ACK
 - Attacchi con indirizzo spoofato : attaccante crea un certo numero di pacchetti con indirizzi cambiati, causali
 - Attacchi distribuiti : Grazie all'utilizzo di BotNet o dei server che possono essere controllati dall'attaccando facendo attacchi di SYN Flood verso la vittima
@@ -353,7 +354,7 @@ Cookies permetto al ricevente di rimanere stateless finche l'initiator produce a
 - Se l'initiator risponde, il cookie viene rigenerato e comparato col cookie restituito dall'initiator
 
 ## SYN Cookies
-//add Image
+![SYN Cookie](/assets/sicurezza_informatica/syn-cookie.png)<br>
 Client manda SYN <br>
 Il server quando manda SYN e ACK calcola un determinato valore tramite una funzione Hash (quella verde nella foto) se la connessione è legittima (ovvero se c'è un client legittimo) mi risponderà Cookie + 1 <br>
 A quel punto il server farà i suoi controlli sul cookie e solo in questo caso allora la connesione è valida.<br>
@@ -366,16 +367,18 @@ Idea : usare una chiave segreta
   - ACK(AN = Sequence Number Server, SN = Sequence Number Client +1)
 - Tramite questo ACK il server può ricostruire tutte le informazioni che contiene il SYN/ACK che ha mandato prima al client e vedo se tutto corrisponde, se positivo allora il server alloca lo spazio
 
-1.06
-
 ## Altra contromisura
 Se la SYN queue è piena, si può cancellare a caso una delle query
 - Le connessioni legettime hanno una chance di essere completate
 - Fake Addr satanno eventualmente cancellati
 
 ## Prolexic Proxy
+Esempio di un altra contromisura, il compito del Prolexic Proxy è effettuare un filtraggio sui SYN e SYN/ACK, immagazzinava questi SYN calcolando il syn/ack e effettuava il forwarding solo quando la connesione era ritenuta legittima.<br>
+![Prolexic Proxy](/assets/sicurezza_informatica/prolexic-proxy.png)
 
-  
+## Attacco robusto : TCP con flood
+Esempio una botnet con 20000 macchine che ricevono il comando di aprire una connessione con un server web sono effettivamente tutte richieste legittime (l'handshake viene completato normalmente) è come se 20000 utenti si connettessero al server web.
+Questa tecnica aggirerà il proxy di protezione dal SYN Flooding
 
 
 
