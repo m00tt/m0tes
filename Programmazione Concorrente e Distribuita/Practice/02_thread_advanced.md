@@ -371,3 +371,201 @@ public class Main {
 	}
 }
 ```
+
+## Esercizio 5: producer-consumer with `BlockingQueue`
+
+```java
+//Producer
+public class Producer extends Thread {
+	BlockingQueue<String> queue;
+	
+	public Producer(BlockingQueue<String> q) {
+		queue = q;
+		start();
+	}
+	
+	public void run() {
+		for(int i=0; i<30; i++) {
+			try {
+				queue.put(String.valueOf(i));
+				System.out.println("PROD: " + String.valueOf(i));
+			} catch (Exception e) {
+				break;
+			}
+		}
+		try {
+			System.out.println("Send stop to Consumer.");
+			queue.put("stop");
+			System.out.println("Producer has finished.");
+		} catch (Exception e) {}
+	}
+}
+
+//Consumer
+public class Consumer extends Thread {
+	BlockingQueue<String> queue;
+	
+	public Consumer(BlockingQueue<String> q) {
+		queue = q;
+		start();
+	}
+	
+	public void run() {
+		for(int i=0; i<50; i++) {
+			try {
+				String s = queue.take();
+				if(s.equalsIgnoreCase("stop")) {
+					System.out.println("Consumer stop received.");
+					break;
+				}
+				System.out.println("CONS: " + s);
+			} catch (Exception e) {
+				break;
+			}
+		}
+		
+		System.out.println("Consumer has finished.");
+	}
+}
+
+//Main
+public class Main {
+
+	public static void main(String[] args) {
+		BlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
+		new Producer(queue);
+		new Consumer(queue);
+	}
+}
+```
+
+## Esercizio 6: producer-consumer with `BlockingQueue` with timeout
+
+```java
+//Producer
+public class Producer extends Thread {
+	
+	BlockingQueue<String> queue;
+	
+	public Producer(BlockingQueue<String> queue) {
+		this.queue = queue;
+	}
+	
+	public void run() {
+		for(int i=0; i<100; i++) {
+			try {
+				if(!queue.offer(String.valueOf(i), 10, TimeUnit.MILLISECONDS)) {
+					System.out.println("Producer timeout");
+					break;
+				}
+				System.out.println("PROD: " + String.valueOf(i));
+			} catch(Exception e) {
+				break;
+			}
+		}
+	}
+}
+
+//Consumer
+public class Consumer extends Thread {
+	
+	BlockingQueue<String> queue;
+	
+	public Consumer(BlockingQueue<String> queue) {
+		this.queue = queue;
+	}
+	
+	public void run() {
+		for(int i=0; i<100; i++) {
+			try {
+				String s = queue.poll(10, TimeUnit.MILLISECONDS);
+				if(s == null) {
+					System.out.println("Consumer timeout");
+					break;
+				}
+				System.out.println("CONS: " + s);
+			} catch(Exception e) {
+				break;
+			}
+		}
+	}
+}
+
+//Main
+public class Main {
+	
+	public static void main(String[] args) {
+		BlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
+		new Producer(queue).start();
+		new Consumer(queue).start();
+	}
+}
+```
+
+## Esercizio 7: ping pong game
+Realizzare un sistema con due thread che condividono una risorsa.<br>
+I due thread devono accedere alternativamente alla risorsa.
+- Non deve mai succedere che lo stesso thread acceda due volte consecutive alla risorsa
+
+```java
+//Creazione del tavolo da gioco che rappresenta la risorsa condivisa
+public class Table {
+	int turn;
+	
+	public Table() {
+		turn = 0; 
+	}
+	
+	public synchronized void waitMyTurn(int id) throws InterruptedException {
+		while(id != turn) { wait(); }
+	}
+	
+	public synchronized void passTurn(int id) {
+		turn = 1 - turn;
+		notifyAll();
+	}
+}
+
+//Creazione del thread
+public class PingPong extends Thread {
+	
+	int id;
+	String name;
+	Table table;
+	
+	public PingPong(int id, String name, Table table) {
+		this.id = id;
+		this.name = name;
+		this.table = table;
+	}
+	
+	public void run() {
+		for(;;) {
+			try {
+				table.waitMyTurn(id); //aspetto il mio turno
+				System.out.println(name + " move"); //gioco
+				table.passTurn(id); //termino il turno
+				Thread.sleep(500);
+			} catch(Exception e) {
+				break;
+			}
+		}
+	}
+}
+
+//Main
+public class Main {
+	
+	public static void main(String[] args) {
+		String[] names = {
+			"Ping",
+			"Pong"
+		};
+		
+		Table table = new Table();
+		new PingPong(0, names[0], table).start();
+		new PingPong(1, names[1], table).start();
+	}
+}
+```
+
