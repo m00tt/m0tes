@@ -283,13 +283,14 @@ Non essendoci quai masi nessuna risposta, è un tipo di scan quasi sempre lento<
 Si spediscono pacchetti application-specific UDP, sperando di generare una risposta<br>
 - esempio, send a dns query sulla porta 53, verrà resituta una risposta, se il server DNS è presente
 
-La scansione è limitata a porte per cui una specifica applicazione è disponibile
+La scansione è limitata a porte per cui una specifica applicazione è disponibile.
 
 # Protocollo FTP
 //add Image <br>
 
 ## FTP Bounce Scan
 Simile a IDLE Scan<br>
+Scansione che si basa sul rimbalzo di un ftp server<br>
 FTP server agisce come uno zombie<br>
 In FTP active mode con il comando PORT si può indicare su quale IP e porta ricevere la risposta<br>
 Se il server non riesce a collegarsi da un errore sulla connessione TCP
@@ -313,7 +314,71 @@ Possibili contromisure :
 - Impedire che il numero di porta sia < 1023
   - evitare attacchi a servizi standard quali SMTP, POP 3, ecc..
 
+# OS Fingerprinting
+È il processo per determinare il sistema operativo usato dal target
+- Si studiano specifici fattori della implementazione dello stack TCP/IP
 
-11.10
+Si esplorano le differenze TCP/IP dei OS 
+- Database di OS TCP/IP fingerprints
+- Sequenze di pacchetti anomali, non rispondenti alle specifiche del protocollo TCP
+- Pacchetti/Sequenze note per provare reazioni dipendenti alle singole implementazioni dello stack TPC
 
+Esaminando le risposte che vengono costruite in base a determinati pacchetti posso avere qualche inidizio su quale os e quale versione dell'os<br>
+Esempio : 
+- FIN prob
+  - RFC 793 requires no response, MS Windows, BSDI, Cisco IOS inviano un RST
+- FIN / SYN probing 
+  - Invia un pacchetto FIN/SYN, Linux rispodne con FIN/SYN/ACK packet
 
+## Difese per il fingerprinting
+- Detection 
+  - NIDS
+- Blocking
+  - Firewalling
+  - Alcuni probes non possono essere filtrati dalle regole di firewalling
+- Ingannare
+  - Far variare le risposte date dal db di nmap, cambiando ad esempio l'impronta che lascia il mio sistema operativo (sistema Linux, alterò i parametri di risposta in modo che corrispodano a un altro sistema operativo)
+
+# nmap - Network Mapper
+Software OpenSource principalmente utilizzato per lo scanning delle porte ma restituisce anche :
+- Lista di open port su un network
+- Un inventario di tutti i servizi disponibili su una rete
+- L'associazione di ogni host con il sistema operativo in esecuzione
+
+nmap supporta TCP SYN Scans, TCP connect() scans, UDP scans, ICMP scans, ecc..
+
+# Traceroute
+Traceroute è uno strumento con interfaccia a riga di comando che consente di avere informazioni sul routing della rete (percorso che i pacchetti seguono sulla rete fino a raggiungere destinatari)<br>
+Funzionamento :
+- Si creano dei pacchetti ICMP che hanno come destinazione il destinatario ma in realtà questi pacchetti hanno un TTL decrementale ad ogni hop, quando raggiunge lo 0 il pacchetto muore e il router su cui avvitene ritorna un "Time Exceeded" ICMP message, il messaggio contiene l'indirizzo IP del router.
+- Esempio : inizia mandando un pacchetto (ICMP o UDP) con TTL == 1 e si apsetta una risposta ICMP TTL exceeded : il mittente sarà a distanza 1 hop
+- Si ripete con TTL crescenti fino a che non si riceve un reply dalla destinazione finale
+
+//add Image<br>
+
+I pacchetti spediti da traceroute possono essere bloccati
+- Quelli che hanno basso TTL artificiale
+- Se sono bloccati dal firewall, non muoiono mai
+  - no time exceeded ICMP
+
+Plain Traceroute usa o UDP Packet o ICMP echo packets
+- entrambi spesso bloccati da sysadmins
+
+Traceroute usa TCP "SYN" packet
+- tcptraceroute non completerà nessun TCP handshake
+
+# Firewall / IDS Evasion / Spoofing
+firewalls possono rendere il mapping di una rete estremamente difficile<br>
+Tutti i più diffusi IDSs hanno regole per rilevare nmap scan<br>
+Molti di questi prodotti si sono trasformati in intrusion prevention system (IPS) che attivamente bloccano il traffico ritenuto malizioso
+
+# Difese
+Prevenzione : 
+- Disabilitare i servizi non necessari 
+- Bloccare le porte con un firewall
+- Usare un statefull firewall
+
+Detection: 
+- Usare un Network Intrusion Detection System
+- Port Scan spesso hanno dei pattern rilevabili
+- IPS può reagire ad uno scan bloccando gli indirizzi IP sospetti
