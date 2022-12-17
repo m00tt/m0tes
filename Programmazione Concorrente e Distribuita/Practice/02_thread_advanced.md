@@ -569,3 +569,106 @@ public class Main {
 }
 ```
 
+## Esercizio: game table
+Si vuole simulare una partita di un gioco da tavolo.
+- La partita coinvolge n giocatori (n>1).
+- Ogni giocatore, finche' la partita non è finita, quando è il suo turno tira i dadi e muove. Se in conseguenza della mossa vince la partita, termina.
+- Se lanciando i dadi ha fatto doppio, tira nuovamente.
+
+```java
+//Thread player
+public class Player extends Thread {
+	int myId;
+	Table myTable;
+	
+	public Player(int id, Table t){
+		this.myId=id;
+		this.myTable=t;
+		this.start();
+	}
+	
+	public void run(){
+		boolean doppio=false;
+		int dado1;
+		int dado2;
+		
+		while(!myTable.finita()){
+			doppio=true;
+			
+			while(doppio){
+				dado1=1+(int)(6*Math.random());
+				dado2=1+(int)(6*Math.random());
+				doppio=(dado1==dado2);
+				try {
+					myTable.mossa(myId, dado1, dado2);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				if(doppio && !myTable.finita()) {
+					System.out.println("double!");
+				}
+			}
+			
+			try {
+				Thread.sleep(ThreadLocalRandom.current().nextInt(100, 300));
+			} catch (InterruptedException e1) {	}
+		}
+	}
+}
+
+//Game table: shared
+public class Table {
+	
+	int turn;
+	private boolean isFinita=false;
+	
+	Table(){
+		turn = 0;
+		isFinita=false;
+	}
+	
+	public synchronized void mossa (int playerId, int dado1, int dado2) throws InterruptedException {
+		while (turn != playerId && !isFinita) {
+			wait();
+		}
+		if(!isFinita) {
+			System.out.println(playerId + " move");
+			isFinita = (Math.random()<0.2);
+			if(isFinita) {
+				System.out.println("il giocatore "+playerId+" ha vinto!");
+			}
+		}
+		if(dado1 != dado2 && !isFinita) {
+			turn = (turn + 1) % Main.NUM_PLAYERS;
+		}
+		notifyAll();
+	}
+
+	boolean finita(){
+		return isFinita;
+	}
+}
+
+//Main
+public class Main {
+	
+	public static final int NUM_PLAYERS = 5;
+
+	public static void main(String[] args) throws InterruptedException {
+		
+		
+		Thread[] players = new Thread[NUM_PLAYERS];
+		Table gameTable = new Table();
+		
+		for(int i=0; i<NUM_PLAYERS; i++) {
+			players[i] = (Thread) new Player(i, gameTable);
+		}
+		
+		for(int i=0; i<NUM_PLAYERS; i++) {
+			players[i].join();
+		}
+
+		System.out.println("Game over");
+	}
+}
+```
