@@ -62,3 +62,139 @@ Quello che viene trasmesso mediante i socket è una sequenza di byte. <br>
 Perciò, i metodi `getInputStream()` e `getOutputStream()` restituiscono degli oggetti di tipo InputStream e OutputStream (che rappresentano, appunto, degli stream di byte).
 
 Se si desidera trasmettere invece dati testuali, è possibile usare `InputStreamReader` e `OutputStreamWriter` per effettuare le conversioni tra byte e caratteri (ed eventualmente `BufferedReader`, `BufferedWriter`, `PrintWriter`, ecc. per una gestione più avanzata della lettura / scrittura).
+
+
+## Echo example
+Come primo semplice esempio di applicazione distribuita, si presenta un server che restituisce al client il testo ricevuto dal client stesso. Questo servizio è solitamente chiamato “echo” (per analogia con il fenomeno acustico dell’eco, che “ripete” ciò che viene detto).
+
+```java
+//Server
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class EchoServer {
+    private static final int PORT = 8080;
+
+    public static void main(String[] args) throws IOException {
+        ServerSocket server = new ServerSocket(PORT);
+        try {
+            System.out.println("Started " + server);
+            Socket socket = server.accept();
+            try {
+                System.out.println("Connection accepted: " + socket);
+                serveClient(socket);
+            } finally {
+                System.out.println("Closing...");
+                socket.close();
+            }
+        } finally {
+            server.close();
+        }
+    }
+
+    private static void serveClient(Socket socket) throws IOException {
+        try (
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter( new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+            //true = autoflush
+        ) {
+            while (true) {
+                String str = in.readLine();
+                if (str.equals("END")) break;
+                System.out.println("Echoing: " + str);
+                out.println(str);
+            }
+        }
+    }
+}
+
+//Client
+import java.io.*;
+import java.net.InetAddress;
+import java.net.Socket;
+
+public class EchoClient {
+    private static final int SERVER_PORT = 8080;
+
+    public static void main(String[] args) throws IOException {
+        InetAddress serverAddr = InetAddress.getByName(null);
+        System.out.println("serverAddr = " + serverAddr);
+        Socket socket = new Socket(serverAddr, SERVER_PORT);
+        try {
+            System.out.println("socket = " + socket);
+            try (
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())),true)
+            ) {
+                for (int i = 0; i < 10; i++) {
+                    out.println("hello " + i);
+                    String str = in.readLine();
+                    System.out.println(str);
+                }
+                out.println("END");
+            }
+        } finally {
+            System.out.println("Closing...");
+            socket.close();
+        }
+    }
+}
+```
+
+## Date Example
+```java
+
+//Server
+import java.io.*;
+import java.net.*;
+import java.util.Date;
+
+public class DateTimeServer {
+    private static final int PORT = 1333;
+
+    public static void main(String[] args) throws IOException {
+        try (ServerSocket server = new ServerSocket(PORT)) {
+            while (true) {
+                try (
+                    Socket connection = server.accept();
+                    Writer out = new OutputStreamWriter(connection.getOutputStream())
+                ) {
+                    Date now = new Date();
+                    out.write(now + "\r\n");
+                    out.flush();
+                }
+            }
+        }
+    }
+}
+
+
+//Client
+import java.io.*;
+import java.net.*;
+
+public class DateTimeClient {
+    private static final int SERVER_PORT = 1333;
+    
+    public static void main(String[] args) throws IOException {
+        InetAddress serverAddr = InetAddress.getByName(null);
+        System.out.println("serverAddr = " + serverAddr);
+        try (
+            Socket socket = new Socket(serverAddr, SERVER_PORT);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))
+        ) {
+            System.out.println("socket = " + socket);
+            String str = in.readLine();
+            System.out.println(str);
+            System.out.println("Closing...");
+        }
+    }
+}
+```
+
+# Caratteristiche di TCP
+Gli esempi presentati finora utilizzano socket stream-based, basati sul protocollo TCP.<br>
+Come già visto, quest’ultimo è progettato per la massima affidabilità, e garantisce che i dati arrivino a destinazione e nell'ordine corretto.
+
+Il principale svantaggio è che, per garantire tale livello di controllo e affidabilità, TCP ha un notevole overhead. Allora, quando l’affidabilità non è necessaria, si possono usare invece socket basati su UDP, che non garantisce la consegna dei pacchetti né l’ordine in cui essi arriveranno, ma ha molto meno overhead.
