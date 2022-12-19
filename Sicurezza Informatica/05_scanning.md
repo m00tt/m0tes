@@ -14,7 +14,7 @@ Obiettivi :
   - Ricadute legali
 
 ## Scenari
-//add Image<br>
+![Scenari](/assets/sicurezza_informatica/scenari.png)<br>
 Lo scenario tipico è il seguente ovvero firweall davanti ai server e si vuole capire le caratteristiche dei server (schema a sinistra)<br>
 
 ## Scanning tipi e approci
@@ -28,10 +28,10 @@ Approcci :
 - Scanning attivo : io stesso interrogo le diverse macchine e vedo se rispondono o meno 
 
 Tipi di scanning : 
-//add Image<br>
+![Tipi di scanning](/assets/sicurezza_informatica/tipi-scanning.png)<br>
 
 
-//add Image Schema<br>
+![Schema di scanning](/assets/sicurezza_informatica/schema-scanning.png)<br>
 
 Come fa il gestore della rete a capire se c'è un port scanning in atto?<br>
 - Vedo se magari c'è un IP che sta interrogando più macchine
@@ -44,7 +44,7 @@ Come fa il gestore della rete a capire se c'è un port scanning in atto?<br>
   - per TCP, c'è bisogno di catturare i messaggi di setup di connessione TCP
     - Il completamento di un 3 way handshake indica che un servizio è disponibile
 
-//add Image
+![Attivo VS Passivo](/assets/sicurezza_informatica/active-vs-passive.png)<br>
 
 ## Scopi dello scanning
 - Wide Range Scanning
@@ -92,7 +92,6 @@ In realtà ci posson essere più stati :
 # Scroprire gli host : ARP scan
 Effetuare una scansione utilizzando le richieste ARP (chi è che ha questo indirizzo IP?)<br>
 Ciclo for in cui effettuo la richiesta su tutte le macchine di una sottorete (funziona solo in sottorete locale e come dest si usa un indirizzo di broadcast)<br>
-//add Image<br>
 
 # Scoprire gli host : ICMP
 Stessa cosa la possa fare con i ping<br>
@@ -129,7 +128,6 @@ Caratteristiche porte :
 - Porte note : 22,80,25..
 - Porte registrare : da 1024 a 49151
 - Porte dinamiche e private : da 49152 a 65535
-//addImage<br>
 
 # Specifiche TCP : RFC 793
 1. Un segmento in arrivo con il flag RST viene sempre scartato senza alcuna risposta.
@@ -140,8 +138,6 @@ Caratteristiche porte :
   - Se il segmento in arrivo contiene un SYN allora viene inviato come risposta al mittente un pacchetto con il flag SYN e ACK
   - Se nessuno dei precedenti è vero allora il segmento viene scartato senza risposta.
 
-Rispetto a queste regole sono stati creati dei meccanismi di scansione : <br>
-//add Image<br>
 
 # TCP connect scan
 Questo tipo di scan fa uso della syscall <b>connect()</b> da utente non privilegiato<br>
@@ -159,9 +155,10 @@ Se sto cercando di stabile una connessione con il server, quello che faccio è :
 - Se ricevo ICMP unreachable significa che c'è un firewall che mi blocca la connessione
 
 Dato che la connessione si conclude lascio sicuramente una traccia.
+![TCP Connect Scan](/assets/sicurezza_informatica/tcp-connect-scan.png)<br>
 
 # TCP SYN (Half-Open) Scan
-//add Image
+![TCP Connect Scan2](/assets/sicurezza_informatica/tcp-connect-open-scan.png)<br>
 Il funzionamento è uguale a prima MA se ricevo un SYN/ACK allora invio un pacchetto RST per non concludere la connessione e quindi non lasciare tracce
 
 # SYN vs Connect Scan
@@ -188,7 +185,7 @@ Se il server è stato raggiunto: il meccanismo di filtraggio del server non è i
 - pacchetto di ACK isolato
 - pacchetto di ACK inserito all'interno di una sessione TCP
 Quindi firewall non maniente lo stato della connessione (stateless)<br>
-//addImage<br>
+![Stealth Scan](/assets/sicurezza_informatica/stealth-scan.png)<br>
 
 # Stealth Scan - ACK
 Non è mirato a verificare su una porta è open<br>
@@ -200,8 +197,6 @@ Si usa per determinare se c'è un firewall<br>
 - TCP RST Response -> unfiltered
 - Nessuna risposta -> Potrebbe essere filtered / Potrebbe essere aperta
 - ICMP unreachable -> filtered
-
-//addImage <br>
 
 # Window Scan
 Windows scan è simile a un ACK scan (manda ACK comunque)<br>
@@ -219,7 +214,7 @@ Sistemi che non supportano questo meccanismo restituiscono closed.
 - Nessuna risposta -> filtered
 - ICMP unreachable error -> filterd
 
-//add Image <br>
+![Window Scan](/assets/sicurezza_informatica/window-scan.png)<br>
 
 # TCP : FIN, NULL, Xmas
 - Nel FIN scan lo scanner pacchetti isolati con il flag FIN a 1
@@ -235,7 +230,7 @@ Sistemi che non supportano questo meccanismo restituiscono closed.
 scavalcano alcuni firewall non stateful che filtrano i SYN o ACK<br>
 Alcuni OS(windows, cisco..) non rispettano lo standard<br>
 Vantaggi : no TCP sessions, no application log
-//add Image <br>
+![FIN NULL XMAS](/assets/sicurezza_informatica/fin-null-xmas.png)<br>
 
 # Fragmentation Scan
 Si modificano i TCP stealth scan (SYN,FIN,Xmas,NUll) per usare piccoli pacchetti frammentati (IP datagrams)<br>
@@ -256,7 +251,7 @@ Usa indirizzi spoofed e il campo ID nell'header IP.<br>
   - Zombie deve essere idle
   - In modo da mantenere consistenti gli IP identification frames durante lo scan (IPID = sequence number)
 
-//addIMage <br>
+![IDLE Scan](/assets/sicurezza_informatica/idle-scan.png)<br>
 
 La sorgente (attaccante) manda un SYN/ACK allo zombie host e aspetta un RST come risposta con IPID, questa iterazione tra attaccante e zombie viene fatta l'attaccante riesce a capire il sequence number che viene rimandato indietro dallo zombie, importante perché riuscirò a capire cosa sta succedendo alla macchina vittima<br>
 Esempio l'attaccante vuole vedere se c'è un determinato server attivo sulla macchina vittima, non sarà lui a testare la porta 80 della vittima ma manderà un pacchetto spoofato con la SYN sulla porta 80, quindi richiesta di inizio connessione, con l'indirizzo spoofato della macchina zombie<br>
@@ -265,8 +260,6 @@ Se la porta è open, la vittima risponderà allo zombie con SYN/ACK<br>
 Lo zombie, non aspettando un SYN/ACK (non ha mandato un SYN, quindi non ha inziato una connessione), risponderà con un RST e aumenterà di 1 il IPID<br>
 La sorgente rispedisce un SYN/ACK allo zombie<br>
 Se l'IPID è stato aumentato, allora la sorgente deduce che la porta della vittima è open on the destination target, altrimenti la porta è closed.
-
-//add Image
 
 - Vantaggi :
   - Nessuna iterazione tra macchina attaccante e target
@@ -286,7 +279,7 @@ Si spediscono pacchetti application-specific UDP, sperando di generare una rispo
 La scansione è limitata a porte per cui una specifica applicazione è disponibile.
 
 # Protocollo FTP
-//add Image <br>
+![FTP](/assets/sicurezza_informatica/ftp.png)<br>
 
 ## FTP Bounce Scan
 Simile a IDLE Scan<br>
@@ -299,7 +292,7 @@ Se il server non riesce a collegarsi da un errore sulla connessione TCP
 Se il trasferimento riesce
 - Porta aperta
 
-//add Image
+![FTP Bounce Scan](/assets/sicurezza_informatica/bounce-scan.png)<br>
 
 - Vantaggi 
   - Usa lo standard FTP per il suo compito
@@ -353,8 +346,6 @@ Funzionamento :
 - Si creano dei pacchetti ICMP che hanno come destinazione il destinatario ma in realtà questi pacchetti hanno un TTL decrementale ad ogni hop, quando raggiunge lo 0 il pacchetto muore e il router su cui avvitene ritorna un "Time Exceeded" ICMP message, il messaggio contiene l'indirizzo IP del router.
 - Esempio : inizia mandando un pacchetto (ICMP o UDP) con TTL == 1 e si apsetta una risposta ICMP TTL exceeded : il mittente sarà a distanza 1 hop
 - Si ripete con TTL crescenti fino a che non si riceve un reply dalla destinazione finale
-
-//add Image<br>
 
 I pacchetti spediti da traceroute possono essere bloccati
 - Quelli che hanno basso TTL artificiale

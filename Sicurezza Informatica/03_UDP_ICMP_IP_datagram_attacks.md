@@ -10,7 +10,7 @@ Protocollo di trasposto minimo
  Il numero di porta di origine fornisce l'indirizzo di ritorno<br>
  Applicazioni : streaming multimediale, trasmissione<br>
  Nessun rincoscimento, nessun controllo del flusso, nessuna continuazione del messaggio<br>
- ![UDP](/assets/sicurezza_informatica/udp.png)
+ ![UDP](/assets/sicurezza_informatica/udp.png)<br>
  
  ## NTP Amplification
  Network Time Protocol (NTP) è un esempio di meccanismo di amplificazione ovvero meccanismi che consentono di creare un grosso numero di pacchetti di traffico in risposta a un singolo pacchetto.<br>
