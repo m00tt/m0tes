@@ -31,8 +31,86 @@ Il Local DNS Resolver, se non conosce il nome che il client sta cercando allora 
 # Tipi di DNS entry : Resource Records
 DNS è usato non solo per l'associazione nome-IP<br>
 Ma anche per trovare un mail server, pop server ecc<br>
+DNS Record Types:
+- NS : name server (punta ad un altro server)
+- A : address record (contiene l'indirizzo IP)
+- MX : indirizzo usato per la gestione della posta elettronica
+- CNAME : mappa un nome alias su un nome di dominio vero
+- SOA : Start of Authorities : restituisce informazioni autorevoli sulla zona DNS, come il contatto per admin
+- TXT : generic test
 
-|
+//insert esempi from documento DNS
+
+# Risoluzione dei nomi
+- Ogni computer ha una libreria per la risoluzione dei nomi (es. gethostbyname in UNIX) detta resolver, inoltre conosce un nome di un DNS server locale. 
+- Il Resolver manda una richiesta DNS al server, il DNS server o dà la risposta o la inoltra ad un altro server, o da un referente, ossia il server successivo al quale la richiesta deve essere spedita. I resolver usano UDP (single name) o TCP (whole group of names). 
+- Sapere l’indirizzo del root server è sufficiente? 
+  - Recursive Query: ritorna una risposta (non un referente), usato dai resolver 
+  - Iterative Query: ritorna una risposta o un riferimento al prossimo server, usato dai DNS server tra di loro
+// add image onenote
+
+- Il client("User's PC") richiede un sitoweb.net, indirizzato a nameserver fornito dal ISP. 
+- Se il nameserver non è authoritative per il sitoweb.net richiesto 
+  - guarda nel local zone database. 
+  - non c’è alcun nome salvato nella cache 
+  - richiesta indirizzata su internet 
+- Tutti I nameserver ricorsivi hanno una lista con 13 root server che hanno gli IP quasi fissi: 
+  - A.ROOT-SERVERS.NET. IN A 198.41.0.4 
+  - B.ROOT-SERVERS.NET. IN A 192.228.79.201 
+  - C.ROOT-SERVERS.NET. IN A 192.33.4.12 
+  - ... 
+  - M.ROOT-SERVERS.NET. IN A 202.12.27.33 
+- Il nameserver ne sceglie uno a caso e manda la query per il record A del sitoweb.net richiesto; 
+  - Es: b.root-servers.net 
+- Se il root server non conosce il sitoweb.net richiesto ridirige al Global Top Level Domain (GTLD) responsabile per I domini .net utilizzando i NS records più qualificati per rispondere alla query. 
+  - Il nameserver sceglie uno degli authoritative server a caso, es. c.gtld-servers.net, ed invia la richiesta per A record del sitoweb.net richiesto. Il GTLD server non conosce la risposta, quindi ridirige ad un referral (un insieme di NS record che hanno piú informazioni).
+  - Il recursive nameserver sceglie uno dei nameserver a caso e manda una terza query, a questo punto otteniamo una risposta. Alcuni flag indicano "This is an authoritative response", la risposta proviene da una delle sorgenti fidate per quel dominio (e non da una cache). Il recursive nameserver del ISP riporta la risposta al client e memorizza nella cache.   
+
+# Risoluzione Inversa
+DNS è usato anche per mappare un indirizzo IP in un host name.  <br>
+Nota: gli IP sono usati in ordine inverso es. ip 1.2.3.4 si trova il relativo nome associato con 4.3.2.1.in-addr.arpa.  <br>
+Attenzione: un nameserver potrebbe dichiarare qualsiasi zona, anche quelle che non possiede. Un attaccante potrebbe settare un nameserver come authoritative zone per bancaitalia.it ma questo non avrebbe nessun effetto: nessun nameserver ad alto livello lo delega. <br>
+
+# Ottimizzazione dei DNS
+- Spatial Locality: I computer locali sono interrogati più di quelli remoti 
+- Temporal Locality: lo stesso set di domini viene interrogato ripetutamente, si usa Caching, ogni entry ha un time to live (TTL)
+- Replication: Multipli server,  multiple radici, si contatta il server geograficamente più vicino
+
+# Messaggi DNS
+Il DNS ha un tipo di messaggio che contiene 5 parti : 
+- Header Section 
+  - Tipo del messaggio e contenuto
+- Question Section
+  - Informazioni sull'oggetto della query
+- Answer Section
+  - RR relativi alla rispota
+- Autority Section
+  - SOA o NS record
+- Additional Section
+  - Informazioni aggiuntive
+
+# Pacchetti DNS
+DNS server sono in ascolto sulla porta 53/udp
+- Query ID
+  - Identificatore unico, permette al server di associa la richiesta alla risposta
+  - Chiamato anche Transaction ID (TXID)
+- FLAGS
+  - QR (Query / Response) : 0 query, 1 response
+  - Opcode 0 for a standard query
+  - AA (Authoritative Answer)
+  - RD (Recursion Desired)
+  - RA (Recursion Available)
+  - Z - reserved must be zero
+  - rcode success or failure
+- Question record count 
+  - Cosa sta cercano : nome,tipo,classe
+- Question count quasi sempre 1
+- Answer / authority / additional recoun count : 
+  - Includono diverse risposte addizionali dal client
+- Question / Answer Data
+  - Contiene la richiesta o la risposta
+
+  //add Image
 
 
 
