@@ -206,8 +206,189 @@ Ogni link, ogni immagine , ogni ad, può provocare un DNS lookup (non c’è bis
 
 La difesa consiste nell'aumentare la taglia delle Query ID; aggiunta di una porta casuale (11 bit in piú) questo porta ad un attacco che dura diverse ore e richiedere ogni query due volte (l’attaccante deve indovinare il QueryID due volte, anche se causa troppo overhead). 
 
-1.41
- 
+# Reverse DNS Spoofing
+- Un accesso fidato spesso si basa sul nome dell’ host 
+  - es. accesso permesso a tutti gli host in .rhosts di lanciare una remote shell. 
+- Se le richieste rsh o rlogin arrivano da indirizzi sorgente numerici il sistema esegue un reverse DNS lookup per determinare l’host name del richiedente e controllare se è in.rhosts. 
 
+- Se un attaccante può cambiare la risposta ad una reverse DNS query, può ingannare la macchina target, visto che non è presente nessuna autenticazione per le risposte DNS e nessun double-checking (numeric -> symbolic -> numeric)
 
- 
+# Altri attacchi contro name server
+
+## “Exploit To Fail” DOS Attack
+Sfrutta una vulnerabilità in alcuni elementi di un'infrastruttura di server dei nomi per causare l'interruzione del servizio di risoluzione dei nomi. Esempio: iniezione di messaggi DNS dannosi (CVE-2002-0400). 
+![“Exploit To Fail” DOS Attack](/assets/sicurezza_informatica/exploit_to_fail.png)<br>
+
+## “Exploit To Own” DOS Attack
+Sfrutta una vulnerabilità in alcuni elementi di un'infrastruttura di server dei nomi per ottenere privilegi amministrativi di sistema. Esempio: RCE tramite BOF. 
+![“Exploit To Own” DOS Attack](/assets/sicurezza_informatica/exploit_to_own.png)<br>
+
+## Reflection Attack
+L'attaccante falsifica l'indirizzo IP dell'host target ed invia messaggi DNS al recursor che invierà la risposta all'host mirato (host target)
+![Reflection Attack](/assets/sicurezza_informatica/reflection_attack.png)<br>
+
+## Reflection And Amplification Attack
+L'attaccante falsifica l'indirizzo IP dell'host target ed invia messaggi DNS al recursor che sollecita una risposta LARGE. Il Recursor invia risposte LARGE all'host target, queste risposte occupano tante risorse. 
+![Reflection And Amplification Attack](/assets/sicurezza_informatica/reflection_amplification.png)<br>
+
+## Distributed Reflection And Amplification Attack
+Lancia reflection and amplification attack da migliaia di bot. 
+![Distributed Reflection And Amplification Attack](/assets/sicurezza_informatica/distributed_reflection_amplification.png)<br>
+
+## Resource Depletion DOS Attack
+L'aggressore invia un flusso di messaggi DNS su TCP dall'indirizzo IP contraffatto del bersaglio, il nameserver alloca le risorse per le connessioni finché le risorse non sono esaurite, la risoluzione dei nomi è ridotta o interrotta
+![Resource Depletion DOS Attack](/assets/sicurezza_informatica/resource_depletion_dos.png)<br>
+
+## NXDOMAIN Cache Exhaustion
+L'aggressore inonda il ricorsore con query DNS per nomi di dominio inesistenti, il recursor tenta di risolvere le query e aggiunge ogni risposta NXDOMAIN alla cache. Questo causa che la cache di Recursor si riempie di risposte inutili e quindi l'elaborazione di query DNS legittime è ridotta. 
+![NXDOMAIN Cache Exhaustion](/assets/sicurezza_informatica/nxdomain_cache_exhaustion.png)<br>
+
+# Pharming
+- La parola deriva da farming, esternalizzazione, sul modello di phishing/fishing
+  - Moltre difese anti-phishing si basano su DNS
+- Si possono avere
+  - entry non corrette in un host file di un computer
+  - compromissione di un router di un local network
+- Uno scenario che include JavaScript per cambiare il DNS server del router
+- Le difese di bypassano avvelenando la DNS cache e/o falsificando le risposte
+- Dynamic pharming
+  - Si fornisce un falso DNS Mapping per un server fidato, download di uno script malizioso
+  - Si forza l'utente a fare il download dal vero server, fornendo temporaneament un DNS mapping corretto
+  - Lo script, e il contenuto hanno la stessa origine
+
+# DNS rebinding
+I web browser in genere aderiscono alla same origin policy, un applet si può connettere solo al server dal quale è stato scaricato. <br>
+Per eseguire la connessione il browser ha bisogno dell’ IP del server<br>
+L'authoritative DNS server associa i nomi nel DNS a indirizzi IP.<br> 
+Il browser si fida del DNS server (soprattutto quando aderisce alla same origin policy) 
+1. L'attaccante crea il dominio attacker.org
+2. Lega il nome a due indirizzi IP
+  - Il proprio e l'indirizzo della vittima
+3. Il client scarica l'applet da attacker.org
+  - Applet si connette al target
+  - Permesso da same origin policy
+![Rebinding](/assets/sicurezza_informatica/rebinding.png)<br>
+
+## Attacco con rebinding
+Esempio pratico: <br>
+- Sfruttando l'attacco di rebinding, la vittima si connette a una pagina esterna gestita dall'attaccante
+- In questa pagina esterna è presente un codice javascript malizioso, che in qualche modo riesce a capire l'indirizzo IP locale della vittima
+- L'attaccante potrà accedere tramite js alla configurazione di network (browser non si accorge di nulla)
+
+L’attaccante usa il DNS rebinding per accedere alle macchine che sono dietro un firewall, si tratta di ip hijacking<br>
+L’attaccante usa il DNS rebinding per accedere pubblicamente a server usando l’ IP del client. Il beneficio si ha nella fiducia che proviene dall’IP del client.
+
+- Spidering the intranet
+  - L'attacante indovina il nome di una macchina interna (usa CNAME per rebind), il resolver ritorna l'IP
+  - Evita lo scan degli IP interni
+  - Si può connettere al server (web server non protetto) 
+- Compromising Unpatched Machines
+  - Macchine interne sono meno protette
+  - Patching non aggiornato, exploit di una macchina dietro al firewall
+- Abusing Internal Open Service
+  - Alcuni servizi sono aperti per uso interno, come stampanti, ftp server, ecc
+  - Router e servizi con pw di default
+
+## IP Hijacking
+Utile per, ad esempio : <br>
+- Committing Click Fraud
+  - Si generano falsi click con IP diversi
+- Sending Spam
+  - Alcuni indirizzi IP sono in blacklist per lo spam
+  - Si usa IP del client per inviare spam
+- Defeating IP-Based Authentication
+  - Accesso a biblioteche ecc
+- Farming Clients
+  - Si attacca usando l'IP del client
+    - La colpa ricade sul suo IP
+  - Se si usa HTTPS non si lascia traccia
+
+# DNS Rebingind Defenses
+- Browser Mitigation : DNS Pinning
+  - Rifiuta di passare a un nuovo IP
+  - Interagisce male con proxy, VPN, DNS dinamico
+  - Non implementato in modo coerente
+- Difese lato server
+  - Controlla l'intestazione host per domini non riconosciuti
+  - Autentica gli utenti con qualcosa di diverso dall'ip
+- Difese firewall
+  - I nomi esterni non possono essere risolti in indirizzi interni
+  - Protegge i browser all'interno dell'organizzazione
+
+# DNSSEC
+IETF (Internet Engineering Task Force) ha definito DNSSEC, versione sicurea del DNS, si basa su public key cryptography per la verifica dei dati DNS che garantisce autenticazione e integrità. Si stabilisce una chain of trust che parte dalla radice attraverso la gerarchia di risoluzione: ad ogni livello nel DNS, la firma del livello superiore è verificata usando una chiave pubblica associata
+
+# DNSSEC - Protezioni offerte
+Nessun cambiamento al formato del pacchetto, il goal è la sicurezza dei dati DNS, non la sicurezza del canale
+- Goal è la sicurezza dei dati DNS, non la sicurezza del canale
+![DNSSEC](/assets/sicurezza_informatica/dnssec.png)<br>
+Ogni zona ha una coppia di chiavi pubblica e privata:  
+- Il proprietario della zona utilizza la chiave privata per firmare i dati della zona, producendo firme digitali per ogni set di record di risorse
+- La chiave pubblica viene utilizzata da altri (risolutori DNS) per convalidare le firme (prova di autenticità)
+- La chiave pubblica è pubblicata nella zona stessa in modo che i resolver possano trovarla
+- Le chiavi pubbliche della zona sono organizzate in una catena di fiduzia che segue il normale percorso di delega DNS
+- I risolutori DNS autenticano le firme DNS dalla radice alla zona foglia contenente il nome.
+
+Nuovi Resource Records (RR): 
+![DNSSEC Record](/assets/sicurezza_informatica/dnssec_record.png)<br>
+
+# Extended DNS
+I messaggi DNS più grandi di 512 byte richiedono: 
+- Utilizzo di TCP (in genere risposta UDP troncata seguita da un nuovo tentativo TCP)
+- EDNS0 - un meccanismo di estensione DNS che consente la negoziazione di dimensioni maggiori Buffer dei messaggi UDP
+- RFC 6891 "Meccanismi di estensione per DNS (EDNS0) 
+Per DNSSEC, EDNS0: negoziazione di carichi utili UDP più grandi, flag per indicare che l'interrogante è in grado di elaborare i record DNSSEC: il Bit "DNSSEC OK" o "DO" 
+
+# Nuovi Flag
+
+## Flag AD
+AD - “Authenticated Data”<br>
+Resolver imposta questo flag nelle risposte quando il record interrogato è firmato con una firma valida e non scaduta e una catena di fiducia autenticata fino a un ancoraggio di fiducia configurato (che potrebbe essere la chiave radice preconfigurata / tracciata) <br>
+Tutti i dati nelle sezioni risposta e autorità incluse sono stati adeguatamente autenticati dal risolutore <br>
+Può anche essere impostato in una query DNS - per indicare che l'interrogante comprende le risposte con il bit AD (ad es. Se desidera uno stato autenticato ma non necessariamente DNSSEC RR)
+
+## Flag CD
+CD - “Checking Disabled”
+Si imposta il flag CD per indicare che "in sospeso" (dati non autenticati) è accettabile, ad es. perché è disposto a fare la propria convalida crittografica delle firme. <br>
+I server abilitati DNSSEC non devono tuttavia restituire dati "cattivi" (ad esempio con firme errate)<br>
+
+# Pacchetto DNS
+![DNS Pacchetto](/assets/sicurezza_informatica/dnssec_pack.png)<br>
+
+# Chiavi
+In genere, viene utilizzata una gerarchia a 2 livelli di DNSKEY 
+- KSK: chiave di firma della chiave, firma altre chiavi (può essere più grande, ad es. più forte e mantenuto offline; utilizzato come punto di ancoraggio della fiducia e certificato dalla zona padre nel DS) 
+- ZSK: chiave di firma della zona, firma tutti i dati nella zona (può avere una forza inferiore e imporre un sovraccarico di calcolo inferiore; può essere modificato senza coordinamento con la zona genitore)
+
+# Secure Delegation
+Indicato dal record DS (Delegation Signer), appare nella zona di delega (ovvero genitore), contiene un hash della chiave pubblica della zona figlio. La convalida dei resolver utilizza la presenza del record DS e la relativa firma (RRSIG) per autenticare in modo sicuro la delega. 
+
+# Authenticated Denial of Existence : Risposte Negative
+Risposta negativa che indica un errore nei record NSEC or NSEC3 (e le loro firme). <br>
+È necessario un ordinamento canonico dei nomi nelle zone firmate (RFC 4034, sezione 6.1), questo avviene a causa del modello di firma precalcolato di DNSSEC (problemi di calcolo e sicurezza della chiave di firma). <br>
+Ordina i nomi DNS in ordine di più significativo (più a destra) prima le etichette, quindi, all'interno di ciascuna etichetta, ordinale come ottetto stringhe, da lettere ASCII a maiuscole e minuscole.<br>
+Esempio : <br>
+- a.example.com 
+- a.example.com 
+- blah.a.example.com 
+- Z.a.example.com 
+- zABC.a.EXAMPLE.com 
+- z.example.com 
+- \001.z.example.com 
+- *.z.example.com 
+- \200.z.example.com 
+
+# Adozione di DNSSEC
+È considerato un elemento fondamentale nelle strategie globali della cosiddetta trusted Internet. <br>
+In realtà la sua adozione non è semplice: 
+- Complessità delle configurazioni 
+- Aumento del traffico
+- Perplessità di una parte della comunità sull'efficacia
+
+# Limiti di DNSSEC
+Secondo D. J. Bernstein, autore di djbdns e di una proposta alternativa (DNSCurve), è mal progettato:
+- L'assunzione di base e che non è pensabile usare la crittografia in ogni pacchetto, per ragioni di efficienza.  
+- Non c'è crittografia dei dati ma solo integrità
+- Le firme sono precalcolate (e quindi occorre ruotare le chiavi per limitare i replay)
+- Tutti i tool per la modifica dei dati DNS devono essere `signature aware'
+- Non c'è protezione contro DoS. 
