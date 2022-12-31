@@ -193,8 +193,80 @@ public class DateTimeClient {
 }
 ```
 
-# Caratteristiche di TCP
+## Caratteristiche di TCP
 Gli esempi presentati finora utilizzano socket stream-based, basati sul protocollo TCP.<br>
 Come già visto, quest’ultimo è progettato per la massima affidabilità, e garantisce che i dati arrivino a destinazione e nell'ordine corretto.
 
 Il principale svantaggio è che, per garantire tale livello di controllo e affidabilità, TCP ha un notevole overhead. Allora, quando l’affidabilità non è necessaria, si possono usare invece socket basati su UDP, che non garantisce la consegna dei pacchetti né l’ordine in cui essi arriveranno, ma ha molto meno overhead.
+
+# Socket UDP
+UDP permette alle applicazioni di inviare e ricevere datagrammi, ovvero messaggi il cui arrivo, tempo di arrivo e contenuto non è garantito.
+
+Java mette a disposizione tre classi per i socket UDP:
+ - `DatagramPacket` : rappresenta un datagramma
+ - `DatagramSocket` : è un socket che consente l'invio e la ricezione di `DatagramPacket`
+ - `MulticastSocket` : utilizzato per inviare un messaggio a molteplici destinatari
+
+## 
+
+```java
+//Server
+import java.io.IOException;
+import java.net.*;
+
+public class UDPServer {
+    private static final int SERVER_PORT = 9876;
+    public static void main(String[] args) throws IOException {
+        try (
+            DatagramSocket serverSocket = new DatagramSocket(SERVER_PORT)
+        ) {
+            byte[] receiveData = new byte[1024];
+            while (true) {
+                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                serverSocket.receive(receivePacket);
+                String sentence = new String( receivePacket.getData(), 0, receivePacket.getLength() );
+                System.out.println("RECEIVED: " + sentence);
+                String capitalizedSentence = sentence.toUpperCase();
+                InetAddress clientAddr = receivePacket.getAddress();
+                int clientPort = receivePacket.getPort();
+                byte[] sendData = capitalizedSentence.getBytes();
+                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientAddr, clientPort);
+                serverSocket.send(sendPacket);
+            }
+        }
+    }
+}
+
+//Client
+import java.io.*;
+import java.net.*;
+
+public class UDPClient {
+    private static final int SERVER_PORT = 9876;
+    public static void main(String[] args) throws IOException {
+        System.out.println("Enter a string: ");
+        String sentence;
+        try (
+            BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in))
+        ) {
+            sentence = inFromUser.readLine();
+        }
+        try (DatagramSocket clientSocket = new DatagramSocket()) {
+            InetAddress serverAddr = InetAddress.getByName(null);
+            byte[] sendData = sentence.getBytes();
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverAddr, 9876);
+            clientSocket.send(sendPacket);
+            byte[] receiveData = new byte[1024];
+            DatagramPacket receivePacket =
+            new DatagramPacket(receiveData, receiveData.length);
+            clientSocket.receive(receivePacket);
+            String modifiedSentence = new String(receivePacket.getData(), 0, receivePacket.getLength());
+            System.out.println("FROM SERVER: " + modifiedSentence);
+        }
+    }
+}
+```
+
+## Trasmissione immagini con UDP
+Dato che UDP tratta datagrammi e trasporta byte, possiamo scomporre un'immagine in tanti datagrammi da 1024 byte ciascuno.
+
