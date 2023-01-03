@@ -270,3 +270,183 @@ public class UDPClient {
 ## Trasmissione immagini con UDP
 Dato che UDP tratta datagrammi e trasporta byte, possiamo scomporre un'immagine in tanti datagrammi da 1024 byte ciascuno.
 
+Questa tipologia di file, però, presuppone una certa affidabilità che UDP non è grado di assicurare.<br>
+Infatti, data l'inaffidabilità di UDP potrebbe essere che i pacchetti vengano persi e/o ricevuti non in ordine, non si avrebbe una ricostruzione corretta dell'immagine.
+
+# Server: gestione multi-client
+Gli esempi visti finora sono in grado di gestire un client alla volta.<br>
+Per la gestione multi-client, si affida il Socket ad un thread creato appositamente per gestire le attività separatamente:
+Quindi:
+ - Si crea un ServerSocket
+ - Si resta in attesa di una nuova connessione di un client tramite `accept()`
+ - Quando si connette un client, viene creato un nuovo thread e passato il Socket ritornato da `accept()`
+ - Subito dopo aver creato il thread, il server torna in ascolto per la gestione di nuovi client
+
+A livello di terminologia, il thread principale del server (quello che esegue le `accept()`) è spesso chiamato <b>master</b>, mentre i thread creati per gestire i singoli client sono detti <b>slave</b>.
+
+## Esempio: echo multi-client
+```java
+//Server
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class MultiEchoServer {
+    public static final int PORT = 8080;
+    public static void main(String[] args) throws IOException {
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println("Server Started");
+            while (true) {
+                Socket socket = serverSocket.accept();
+                try {
+                    new OneEchoServer(socket); //Thread creation
+                } catch (Exception e) {
+                    // If thread creation fails, close the socket.
+                    // Otherwise, normally, the socket will be closed by
+                    // the thread.
+                    socket.close();
+                    throw e;
+                }
+            }
+        }
+    }
+}
+
+//Thread
+import java.io.*;
+import java.net.Socket;
+
+public class OneEchoServer extends Thread {
+    private final Socket socket;
+    
+    public OneEchoServer(Socket socket) {
+        this.socket = socket;
+        start();
+    }
+
+    public void run() {
+        try (
+            BufferedReader in = new BufferedReader(
+            new InputStreamReader(socket.getInputStream())
+        );
+        PrintWriter out = new PrintWriter(
+            new BufferedWriter(
+            new OutputStreamWriter(socket.getOutputStream())
+            ),
+            true // Auto-flush
+            )
+        ) {
+            echo(in, out);
+            System.out.println("Closing...");
+        } catch (IOException e) {
+            System.err.println("IO Exception");
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                System.err.println("Socket not closed");
+            }
+        }
+    }
+
+    private void echo(BufferedReader in, PrintWriter out) throws IOException {
+        while (true) {
+            String str = in.readLine();
+            if (str.equals("END")) break;
+            System.out.println("Echoing: " + str);
+            out.println(str);
+        }
+    }
+}
+
+//Client
+import java.io.*;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.concurrent.ThreadLocalRandom;
+
+public class EchoClientThread extends Thread {
+private final InetAddress serverAddr;
+private final int serverPort;
+private final int id;
+private static int nextId = 0;
+private static int threadCount = 0;
+public static int threadCount() {
+return threadCount;
+}
+public EchoClientThread(InetAddress serverAddr, int serverPort) {
+        this.serverAddr = serverAddr;
+        this.serverPort = serverPort;
+        synchronized (EchoClientThread.class) {
+            id = nextId;
+            nextId++;
+            threadCount++;
+        }
+        start();
+    }
+
+    public void run() {
+        System.out.println("Making client " + id);
+        try (
+            Socket socket = new Socket(serverAddr, serverPort);
+                BufferedReader in = new BufferedReader(
+                new InputStreamReader(socket.getInputStream())
+            );
+            PrintWriter out = new PrintWriter(
+                new BufferedWriter(
+                new OutputStreamWriter(socket.getOutputStream())
+                ),
+                true // Auto-flush
+            )
+        ) {
+            for (int i = 0; i < 25; i++) {
+                out.println("Client " + id + ": " + i);
+                Thread.sleep(ThreadLocalRandom.current().nextInt(200, 800));
+                System.out.println(in.readLine());
+            }
+            out.println("END");
+        } catch (IOException e) {
+            System.err.println("IO Exception");
+        } catch (InterruptedException e) {
+            System.err.println("Interrupted");
+        } finally {
+            synchronized (EchoClientThread.class) {
+                threadCount--;
+            }
+        }
+    }
+}
+
+//Main
+import java.io.IOException;
+import java.net.InetAddress;
+
+public class MultiEchoClient {
+    private static final int MAX_THREADS = 40;
+    public static void main(String[] args)
+    throws IOException, InterruptedException {
+        InetAddress serverAddr = InetAddress.getByName(null);
+        while (true) {
+            if (EchoClientThread.threadCount() < MAX_THREADS) {
+                new EchoClientThread(serverAddr, MultiEchoServer.PORT);
+            }
+            Thread.sleep(100);
+        }
+    }
+}
+```
+
+# Esempio: Domande e Risposte (Q&A)
+Il server pone domande al client, il client risponde.<br>
+Il server segnala al client se la risposta è corretta, nel caso in cui sia sbagliata invia anche la risposta corretta.
+
+Il server legge da un file le domande e le risposte (qna.txt).
+```txt
+Domanda1
+Risposta1
+Domanda2
+Risposta2
+Domanda3
+Risposta3
+```
+
