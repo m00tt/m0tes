@@ -276,3 +276,245 @@ public class Client {
 }
 ```
 
+# Contatore con proxy e skeleton (con risorsa condivisa)
+Implementiamo lo stesso esempio fatto in precedenza ma introduciamo una risorsa condivisa che quindi richiede opportuni accorgimenti in modo che non si verifichino race conditions.
+
+```java
+//ServerInterface: interfaccia che dichiara le operazioni effettuabili dal server
+import java.io.IOException;
+
+public interface ServerInterface {
+	
+	public static final int SERVER_PORT = 9090;
+	
+	String reset() throws IOException;
+	String increment() throws IOException;
+	String sum(int s) throws IOException;
+}
+
+
+//Counter: classe lato server che implementa l'interfaccia e ne definisce i metodi
+import java.io.IOException;
+
+public class Counter implements ServerInterface {
+
+	private int counter = 0;
+
+	@Override
+	public synchronized String reset() throws IOException {
+		counter = 0;
+		return String.valueOf(counter);
+	}
+
+	@Override
+	public synchronized String increment() throws IOException {
+		counter++;
+		return String.valueOf(counter);
+	}
+
+	@Override
+	public synchronized String sum(int s) throws IOException {
+		counter += s;
+		return String.valueOf(counter);
+	}
+	
+	public String getCounter() {
+		return String.valueOf(counter);
+	}
+}
+
+
+//Skeleton: proxy lato server che gestisce le comunicazioni verso il ClientProxy
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.Socket;
+
+public class Skeleton extends Thread {
+	
+	private final Socket socket;
+	private final Counter counter;
+	
+	public Skeleton(Socket socket, Counter counter) {
+		this.socket = socket;
+		this.counter = counter;
+		start();
+	}
+	
+	public void run() {
+		try {
+			
+			try(
+					BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+					PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+					
+				){
+				
+				serveClient(in, out);
+				
+			} finally {
+				socket.close();
+			}
+			
+		} catch(Exception e) {}
+	}
+	
+	private void serveClient(BufferedReader in, PrintWriter out) throws IOException {
+		String operation;
+		while(true) {
+			operation = in.readLine();
+			if(operation.equalsIgnoreCase("exit")) break;
+			if(operation.equalsIgnoreCase("<reset>")) {
+				out.println("Counter resetted to " + counter.reset());
+			} else if (operation.equalsIgnoreCase("<increment>")) {
+				out.println("Counter incremented: " + counter.increment());
+			} else if (operation.startsWith("<sum>")) {
+				String[] split = operation.split(" ");
+				int n = Integer.parseInt(split[1]);
+				out.println("Sum: " + counter.getCounter() + " + " + n + " = " + counter.sum(n));
+			} else {
+				out.println("Invalid input");
+			}
+		}
+		System.out.println("Client disconnected");
+	}
+}
+
+
+//Server: si occupa di accettare le richieste client e creare uno skeleton dedicato ad ogni richiesta
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Server {
+
+	public static void main(String[] args) throws IOException {
+		
+		Counter counter = new Counter();
+		
+		try(ServerSocket serverSocket = new ServerSocket(ServerInterface.SERVER_PORT)){
+			System.out.println("Server up and running...");
+			while(true) {
+				Socket socket = serverSocket.accept();
+				System.out.println("New client connected");
+				new Skeleton(socket, counter);
+			}
+			
+		} catch(Exception e) {
+			throw e;
+		}
+	}
+}
+
+
+//ProxyClient: implementa l'interfaccia ServerInterface e mette a disposizione localmente le operazioni effettuabili al client
+//Instaura una connessione con il server in modo da inoltrare le richieste del client e ricevere risposte
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+
+public class ProxyClient implements ServerInterface, AutoCloseable {
+
+	private Socket socket;
+	private BufferedReader in;
+	private PrintWriter out;
+	
+	public ProxyClient() throws IOException {
+		try {
+			InetAddress serverAddress = InetAddress.getByName(null);
+			socket = new Socket(serverAddress, ServerInterface.SERVER_PORT);
+			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+		} catch(Exception e) {
+			if(in!=null) in.close();
+			if(out!=null) out.close();
+			socket.close();
+			throw e;
+		}
+	}
+	
+	@Override
+	public String reset() throws IOException {
+		out.println("<reset>");
+		return in.readLine();
+	}
+
+	@Override
+	public String increment() throws IOException {
+		out.println("<increment>");
+		return in.readLine();
+	}
+
+	@Override
+	public String sum(int s) throws IOException {
+		out.println("<sum> " + s);
+		return in.readLine();
+	}
+
+	@Override
+	public void close() throws Exception {
+		out.println("exit");
+		in.close();
+		out.close();
+		socket.close();
+	}
+}
+
+
+//ClientThread: Thread lato client per l'esecuzione di operazioni lato server
+public class ClientCounter extends Thread {
+	
+	private int id;
+
+	public ClientCounter(int id) {
+		this.id = id;
+		start();
+	}
+	
+	public void run() {
+		try(ProxyClient server = new ProxyClient()){
+			log(server.reset());
+			Thread.sleep(3000);
+			
+			for(int i=0; i<20; i++) {
+				log(server.increment());
+			}
+			
+			log(server.sum(17));
+			server.close();
+			
+		} catch (Exception e) {}
+	}
+	
+	private void log(String message) {
+		System.out.println("Client " + id + ": " + message);
+	}
+}
+
+
+//Client: si occupa della creazione dei ClientThread
+public class Client {
+	
+	private static final int NUM_CLIENT = 4;
+
+	public static void main(String[] args) throws InterruptedException {
+		
+		System.out.println("Client started");
+		
+		ClientCounter[] threads = new ClientCounter[NUM_CLIENT];
+		for(int i=0; i<NUM_CLIENT; i++) {
+			threads[i] = new ClientCounter(i);
+		}
+		
+		for(ClientCounter client : threads) {
+			client.join();
+		}
+	}
+}
+```
