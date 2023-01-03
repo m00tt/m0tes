@@ -450,3 +450,176 @@ Domanda3
 Risposta3
 ```
 
+In questo esempio si prenderà in analisi il comportamento server per la gestione multi-client.
+
+```java
+//QuestionAndAnswer Class
+public class QnA {
+	
+	private String question;
+	private String answare;
+	
+	public QnA(String question, String answare) {
+		this.question = question;
+		this.answare = answare;
+	}
+
+	public String getAnsware() {
+		return answare;
+	}
+
+	public String getQuestion() {
+		return question;
+	}
+}
+
+//Server
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Server {
+	public static final int PORT = 8081;
+	private List<QnA> questionsAndAnswers;
+	
+	public static void main(String[] args) throws FileNotFoundException, IOException {
+		File qna = new File("qna.txt");
+		List<QnA> questionandanswer = new ArrayList<>();
+		
+		try(BufferedReader br = new BufferedReader(new FileReader(qna))) {
+			while(true) {
+				String question = br.readLine();
+				String answare = br.readLine();
+				if(question == null || answare == null) {
+					break;
+				}
+				
+				questionandanswer.add(new QnA(question, answare));
+			}
+		}
+		
+		new Server(questionandanswer).serve();
+	}
+	
+	public Server(List<QnA> qna) {
+		this.questionsAndAnswers = qna;
+	}
+	
+	public void serve() throws IOException {
+		try(ServerSocket socket = new ServerSocket(PORT)){
+			System.out.println("Server up and running...");
+			while(true) {
+				Socket clientSocket = socket.accept();
+				try {
+					new QnAThread(clientSocket, questionsAndAnswers);
+				} catch (Exception e){
+					socket.close();
+				}
+			}
+		}
+	}
+}
+
+
+//Server Thread
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.List;
+import java.util.Random;
+
+public class QnAThread extends Thread {
+	
+	Socket socket;
+	List<QnA> questionsAndAnswers;
+	
+	public QnAThread(Socket socket, List<QnA> questionsAndAnswers) {
+		this.socket = socket;
+		this.questionsAndAnswers = questionsAndAnswers;
+		start();
+	}
+	
+	public void run() {
+		try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+			serveClient(in, out);
+		} catch(Exception e) {
+			System.out.println("Error");
+		} finally {
+			try {
+				socket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void serveClient(BufferedReader in, PrintWriter out) throws IOException {
+		
+		String again = "";
+		
+		do {
+			int rand = new Random().nextInt(questionsAndAnswers.size());
+			QnA picked = questionsAndAnswers.get(rand);
+			
+			out.println(picked.getQuestion());
+			String answer = in.readLine();
+			String correct = picked.getAnsware();
+			
+			if (answer.equalsIgnoreCase(correct)) {
+				out.println("WOW! That's correct." + "      Another question? (y/n)");
+			} else {
+				out.println("Noope. The correct answer is: " + correct + "      Another question? (y/n)");
+			}
+			again = in.readLine();
+			
+		} while(!again.equalsIgnoreCase("n"));
+		
+		out.println("Session end");
+	}
+}
+
+//Client
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+
+public class Client {
+	
+	public static void main(String[] args) {
+		try { 
+			
+			InetAddress serverAddress = InetAddress.getByName(null);
+			try (Socket socket = new Socket(serverAddress, 8081)) {
+				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+				BufferedReader userIn = new BufferedReader(new InputStreamReader(System.in));
+				
+				String serverLine;
+				while((serverLine = in.readLine()) != null) {
+					System.out.println(serverLine);
+					if(serverLine.equalsIgnoreCase("Session end")) break;
+					String answer = userIn.readLine();
+					out.println(answer);
+				}
+			}
+			
+		} catch (Exception e) {
+			
+		}
+	}
+}
+```
