@@ -51,3 +51,320 @@ Lato server, il messaggio è ricevuto da uno <b>skeleton</b>: esso ricostruisce 
 - stub e skeleton comunicano tra di loro utilizzando i riferimenti remoti e fanno da intermediari a client e server
 
 Tutta questa struttura è praticamente trasparente al programmatore.
+
+# Code
+## Oggetti remoti
+Un server RMI è un oggetto remoto.<br>
+Un oggetto remoto è descritto da un'<b>interfaccia remote</b>:
+- che estende `java.rmi.Remote`
+- i cui metodi devono dichiarare l'eccezione `java.rmi.RemoteException`
+
+```java
+import java.math.BigInteger;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+public interface PowerService extends Remote {
+    BigInteger square(int n) throws RemoteException;
+    BigInteger power(int n1, int n2) throws RemoteException;
+}
+```
+
+## Passaggio di parametri
+- Se si passa un oggetto locale o un valore di tipo primitivo, RMI fa automaticamente marshalling e unmarshalling dei parametri, purché i tipi dei parametri siano _serializzabili_. Quindi, gli oggetti passati o restituiti da un oggetto remoto devono implementare l'interfaccia `Serializable`.
+
+- Se si passa un riferimento ad un oggetto remoto, viene effettivamente trasmesso solamente il riferimento, senza bisogno di serializzare l'oggetto.
+
+## Fasi di sviluppo di un'app
+1. Definizione dell'interfaccia remota
+2. Definizione del codice dell'oggetto remoto, che deve:
+    - Implementare l'interfaccia remota
+    - Estendere la classe `java.rmi.server.UnicastRemoteObject` e chiamare uno dei suoi costruttori, o, in alternativa, non estendere tale classe ma chiamare uno dei suoi metodi statici `exportObject`
+    - Pubblicare il servizio sul registry
+3. Definire il codice del client
+    - Richiedere al registry un riferimento all'oggetto remoto
+    - Assegnare il riferimento ad una variabile che ha come tipo l'interfaccia remota
+
+### Esempio
+Come primo esempio, si realizza un’applicazione client–server nella quale il client invoca un metodo sayHello del server, che non ha parametri e restituisce una stringa.
+
+1. Creazione dell'interfaccia remota
+```java
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+public interface Hello extends Remote {
+    String sayHello() throws RemoteException;
+}
+```
+
+2. Implementazione del server
+```java
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+public class HelloImpl extends UnicastRemoteObject implements Hello {
+
+    public HelloImpl() throws RemoteException {
+        super(); //rende ogni istanza di HelloImpl un oggetto remoto
+    }
+
+    public String sayHello() {
+        return "Hello, world!";
+    }
+    public static void main(String[] args) throws Exception {
+        if (System.getSecurityManager() == null) {
+            System.setSecurityManager(new SecurityManager());
+        }
+        HelloImpl obj = new HelloImpl(); //crea l'oggetto da esporre
+        Naming.rebind("HelloServer", obj); //lo pubblica sul registry
+        System.out.println("Server ready");
+    }
+}
+```
+
+3. Implementazione del client
+```java
+import java.rmi.Naming;
+
+public class HelloClient {
+    public static void main(String[] args) throws Exception {
+        System.setSecurityManager(new SecurityManager());
+
+        Hello stub = (Hello) Naming.lookup("//" + args[0] + "/HelloServer"); //crea il riferimento all'oggetto tramite il registry
+        String response = stub.sayHello(); //invoca il metodo dell'oggetto remoto
+        System.out.println("response: " + response);
+    }
+}
+```
+
+## Sicurezza in RMI
+Con RMI, è possibile caricare delle classi da remoto. Queste sono necessariamente considerate “non affidabili” (in quanto potrebbero contenere codice malevolo), quindi, di
+default, il caricamento delle classi remote è disabilitato (ogni tentativo di farlo genera un errore).
+
+Per consentirlo, è necessario usare un opportuno <b>security manager</b>, che è un’istanza della classe `java.lang.SecurityManager` (o di una sua sottoclasse).<br>
+L’istruzione per usare un security manager è
+```java
+System.setSecurityManager(new SecurityManager());
+```
+e deve essere eseguita prima che RMI abbia bisogno di caricare classi da remoto (dunque, tipicamente, come prima operazione).
+
+Se si eseguono client e server sulla stessa macchina, è facile fare in modo che abbiano entrambi accesso a tutte le classi necessarie, quindi un SecurityManager è superfluo.
+
+### Policy
+Un security manager richiede un <b>file di policy</b>, in cui si specifica quali tipi di operazioni possono eseguire le classi caricate dai vari codebase sulla rete.<br>
+Tale file può essere collocato in una qualsiasi directory e può avere un nome qualsiasi: la sua posizione viene specificata attraverso la proprietà
+`java.security.policy`, che si imposta nel comando usato per avviare la JVM:
+```java
+java -Djava.security.policy=<nomefile> <programma> <argomenti...>
+```
+
+Il file di policy più semplice è quello che definisce una “global permission”, cioè permette a tutte le classi caricate di eseguire tutti i tipi di operazioni.
+```
+grant {
+    	permission java.security.AllPermission;
+};
+```
+Ovviamente, non è opportuno usare una policy di questo tipo in un ambiente di produzione.
+
+## Registry
+Il registry è un processo che solitamente gira sul server (ma non obbligatoriamente) e di default è in ascolto sulla porta 1099.
+
+Il server, per poter esporre un suo oggetto/servizio, deve registrarlo presso il registry associandogli una label nota ai client.
+```java
+Naming.rebind("HelloServer", obj) //Assegno l'etichetta "HelloServer" all'oggetto obj
+```
+
+### Metodi dell'interfaccia Registry
+
+| Metodo                                                                                               | Descrizione                                                         |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `void bind(String name, Remote obj) throws RemoteException, AlreadyBoundException, AccessException;` | Associa un riferimento remoto a un nome                             |
+| `void rebind(String name, Remote obj) throws RemoteException, AccessException;`                      | Come `bind`, ma sovrascrive un’eventuale associazione già esistente |
+| `void unbind(String name) throws RemoteException, NotBoundException, AccessException;`               | Elimina l’associazione di un riferimento remoto a un nome           |
+| `String[] list() throws RemoteException, AccessException;`                                           | Fornisce l’elenco dei servizi di cui il registry è a conoscenza     | 
+| `Remote lookup(String name) throws RemoteException, NotBoundException, AccessException;`             | Restituisce il riferimento remoto associato a un nome               |
+
+<b>bind, rebind e unbind</b> sono utilizzati dal server, mentre <b>list e lookup</b> sono utilizzati dal client.
+
+
+## Esecuzione dell'applicazione
+Poniamo di prendere come esempio il codice [qui](#esempio), per eseguirlo bisogna seguire i seguenti passaggi:
+1. Si avvia il registry
+    - `rmiregistry <port>` se si vuole cambiare la porta, altrimenti verrà usata quella di default (1099)
+    - Si esegue il comando:
+        - Unix > `rmiregistry &`
+        - Windows > `start rmiregistry`
+
+2. Si avvia il server indicando il percorso del file di policy. Ad esempio, se quest’ultimo è chiamato policy e si trova nella stessa cartella di HelloImpl.class:
+```java
+java -Djava.security.policy=policy HelloImpl
+```
+
+3. Si avvia il client indicando il percorso del file di policy, e, in questo caso si passa come argomento il nome host del server
+```java
+java -Djava.security.policy=policy HelloClient localhost
+```
+
+## Deployment
+
+![RMI Deploy](/assets/programmazione_concorrente_e_distribuita/rmi_deploy.png)
+
+Questo tipo di deployment è detto _statico_, perché si posizionano manualmente sulle varie macchine i file di cui esse hanno bisogno, quindi non è necessario il _dynamic class loading_.
+
+<b>! </b>: Se si dovessero usare directory diverse, il comando `rmiregistry` deve essere eseguito nella directory dove si sono messi i file del server, altrimenti potrebbero verificarsi degli errori.
+
+## Esempio 2: passaggio di un argomento
+In questo secondo esempio il metodo dell’oggetto remoto che il client invoca ha un argomento di tipo non primitivo, che deve quindi essere _serializzabile_.
+
+```java
+//Definizione della classe serializzabile
+import java.io.Serializable;
+
+public class Person implements Serializable {
+    private static final long serialVersionUID = 1;
+    private String name;
+    public Person(String name) { this.name = name; }
+    public String getName() { return name; }
+}
+
+
+//Adattamento dell'interfaccia remota in modo che preveda anche il metodo "sayHello(Person p)"
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+public interface HelloPerson extends Remote {
+    String sayHello() throws RemoteException;
+    String sayHello(Person p) throws RemoteException;
+}
+
+//Server
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+public class HelloPersonImpl extends UnicastRemoteObject implements HelloPerson {
+    public HelloPersonImpl() throws RemoteException {
+        super();
+    }
+
+    public String sayHello() {
+        return "Hello, world!";
+    }
+
+    public String sayHello(Person p) { //Aggiunge la definizione del metodo sayHello(Person p)
+        return "Hello, " + p.getName();
+    }
+
+    public static void main(String[] args) throws Exception {
+        if (System.getSecurityManager() == null) {
+            System.setSecurityManager(new SecurityManager());
+        }
+        HelloPersonImpl obj = new HelloPersonImpl();
+        Naming.rebind("HelloPersonServer", obj);
+    }
+}
+
+//Client
+import java.rmi.Naming;
+
+public class HelloPersonClient {
+    public static void main(String[] args) throws Exception {
+        System.setSecurityManager(new SecurityManager());
+        
+        HelloPerson stub = (HelloPerson) Naming.lookup("//" + args[0] + "/HelloPersonServer");
+        
+        String response = stub.sayHello();
+        System.out.println("response: " + response);
+        
+        Person someone = new Person("Caio Sempronio"); //Creazione dell'oggetto Person e invio verso lo skeleton
+        response = stub.sayHello(someone);
+        System.out.println("response: " + response);
+    }
+}
+```
+
+### Deployment
+
+![RMI Deploy](/assets/programmazione_concorrente_e_distribuita/rmi_deploy2.png)
+
+
+## Gestione alternativa del Registry (migliore)
+Invece della classe `Naming`, per gestire il registry si può usare la classe `LocateRegistry`, che consente di ottenere un oggetto di tipo `Registry`.
+
+I metodi messi a disposizione dalla classe sono:
+- Diverse varianti di `getRegistry()`
+    - `public static Registry getRegistry() throws RemoteException;`
+    - `public static Registry getRegistry(int port) throws RemoteException;`
+    - `public static Registry getRegistry(String host) throws RemoteException;`
+    - `public static Registry getRegistry(String host, int port) throws RemoteException;`
+
+Che permettono di ottenere un riferimento ad un registry esistente.
+
+- `public static Registry createRegistry(int port) throws RemoteException;`
+
+Che permette di creare un registry sull'host corrente e sulla porta specificata, eliminando la necessità di avviare un registry separatamente.
+
+### Esempio con `createRegistry`
+```java
+//Server
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+public class HelloPersonImpl extends UnicastRemoteObject implements HelloPerson {
+    public HelloPersonImpl() throws RemoteException {
+        super();
+    }
+
+    public String sayHello() {
+        return "Hello, world!";
+    }
+
+    public String sayHello(Person p) { //Aggiunge la definizione del metodo sayHello(Person p)
+        return "Hello, " + p.getName();
+    }
+
+    public static void main(String[] args) throws RemoteException {
+        if (System.getSecurityManager() == null) {
+            System.setSecurityManager(new SecurityManager());
+        }
+        HelloPersonImpl obj = new HelloPersonImpl();
+        Registry registry = LocateRegistry.createRegistry(1099); //Creazione del registry sul server sulla porta 1099
+        registry.rebind("HelloPersonServer", obj);
+    }
+}
+
+//Client
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+
+public class HelloPersonClient {
+    public static void main(String[] args) throws Exception {
+        System.setSecurityManager(new SecurityManager());
+        
+        Registry registry = LocateRegistry.getRegistry(args[0], 1099); //getRegistry per accedere al registry creato dal server
+        HelloPerson stub = (HelloPerson) registry.lookup("HelloPersonServer");
+        
+        String response = stub.sayHello();
+        System.out.println("response: " + response);
+        
+        Person someone = new Person("Caio Sempronio");
+        response = stub.sayHello(someone);
+        System.out.println("response: " + response);
+    }
+}
+```
+
+## Deploy in ambiente distribuito
+Quando si esegue il deployment di un’applicazione RMI in un ambiente distribuito, come già detto si hanno tipicamente server e registry su una macchina, e il client su un’altra.
+
+Potrebbe capitare che il server invii al client degli oggetti di classi che quest’ultimo non conosce. Per permettere al client di procurarsi dinamicamente il codice di tali classi, si possono installare i file `.class` su un web server.
+
+Quando si lancia il server RMI, bisogna indicare, con la proprietà java.rmi.server.codebase, l’URL dove si trovano le classi:
+```java
+java -Djava.security.policy=policy
+     -Djava.rmi.server.codebase=<URL> ServerMain
+```
