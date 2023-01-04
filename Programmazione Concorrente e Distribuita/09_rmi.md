@@ -152,6 +152,8 @@ e deve essere eseguita prima che RMI abbia bisogno di caricare classi da remoto 
 
 Se si eseguono client e server sulla stessa macchina, è facile fare in modo che abbiano entrambi accesso a tutte le classi necessarie, quindi un SecurityManager è superfluo.
 
+<b>ATTENZIONE</b>: Dal 2021, l'utilizzo del SecurityManager è deprecato. Non vi è un sostituto o l'intenzione di un sostituto lato Java in quanto è stata delegata l'attività alla JVM.
+
 ### Policy
 Un security manager richiede un <b>file di policy</b>, in cui si specifica quali tipi di operazioni possono eseguire le classi caricate dai vari codebase sulla rete.<br>
 Tale file può essere collocato in una qualsiasi directory e può avere un nome qualsiasi: la sua posizione viene specificata attraverso la proprietà
