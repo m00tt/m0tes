@@ -232,3 +232,280 @@ public class DeserializzaPunto {
 - Se si desidera serializzare solo alcuni campi di una classe, è possibile contrassegnare quelli da non salvare con l'attributo `transient`
 - I campi `static` di ua classe non vengono serializzati
 - Se i campi di un oggetto serializzabile contengono un riferimento a un oggetto non serializzabile, verrà sollevata una `NotSerializableException`
+
+
+# Stream di oggetti tramite socket
+Per inviare tramite socket un oggetto Java da un client ad un server (o viceversa) sarà necessario creare degli stream di `ObjectInputStream` e `ObjectOutputStream` sul socket.
+
+Il programma non varia affatto da quelli visti in precedenza, ma semplicemente saranno presenti `ObjectInputStream` e `ObjectOutputStream` al posto dei classici `BufferedReader` e `PrintWriter`.
+
+## Esempio: invio di una stringa
+```java
+//Server
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Server {
+	
+	public static final int SERVER_PORT = 9090;
+
+	public static void main(String[] args) {
+		
+		try {
+			ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
+			Socket socket = serverSocket.accept();
+			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			
+			String toSend = new String("Sent");
+			out.writeObject(toSend);
+			socket.close();
+			serverSocket.close();
+		} catch(Exception e) { }
+	}
+}
+
+//Client
+import java.io.ObjectInputStream;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
+public class Client {
+
+	public static void main(String[] args) throws UnknownHostException {
+		
+		InetAddress serverAddress = InetAddress.getByName(null);
+		try(Socket socket = new Socket(serverAddress, Server.SERVER_PORT)){
+			
+			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+			String received = (String) in.readObject();
+			
+			System.out.println("Received: " + received);
+			socket.close();
+		}catch(Exception e) {}
+	}
+}
+```
+
+## Esempio: invio di un array
+```java
+//Server
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class Server {
+	
+	public static final int SERVER_PORT = 9090;
+
+	public static void main(String[] args) {
+		
+		try {
+			ServerSocket serverSocket = new ServerSocket(SERVER_PORT);
+			Socket socket = serverSocket.accept();
+			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			
+			String[] toSend = new String[]{
+				"sent1",
+				"sent2",
+				"sent3"
+			};
+			out.writeObject(toSend);
+			socket.close();
+			serverSocket.close();
+		} catch(Exception e) { }
+	}
+}
+
+//Client
+import java.io.ObjectInputStream;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
+public class Client {
+
+	public static void main(String[] args) throws UnknownHostException {
+		
+		InetAddress serverAddress = InetAddress.getByName(null);
+		try(Socket socket = new Socket(serverAddress, Server.SERVER_PORT)){
+			
+			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+			String[] received = (String[]) in.readObject();
+			
+			for(String item : received) {
+				System.out.println(item);
+			}
+			
+			socket.close();
+		}catch(Exception e) {}
+	}
+}
+```
+
+# ClassNotFoundException
+Quando si trasferisce un oggetto serializzato, dato che il client deve ricostruire l'oggetto, deve anche sapere di che oggetto si tratta.
+
+Se l'oggetto serializzato è primitivo, la JVM sa sempre come interpretare i byte serializzati. Altrimenti, è necessario conoscere il codice della classe di cui l'oggetto è istanza.
+Se tale codice non è disponibile, verrà sollevata una `ClassNotFoundException`.
+
+## Esempio
+Supponiamo di avere costruito la classe `Punto` e che sia pronta per essere serializzata:
+
+```java
+import java.io.Serializable;
+public class Punto implements Serializable {
+    private static final long serialVersionUID = 1;
+    private int x, y;
+    public Punto(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+    public String toString() {
+        return "Il punto ha coordinate " + x + " e " + y;
+    }
+}
+```
+
+Una volta che la classe viene passata al client, anch'esso deve essere a conoscenza della classe `Punto` altrimenti non risucirà a ricostruire correttamente l'oggetto e sarà sollevata una `ClassNotFoundException` (anche cercando di dichiarare un `Object` generico si otterrebbe comunque l'eccezione).
+
+Soluzione: fare in modo che anche il client conosca la classe `Punto.class`, che deve essere la stessa usata dal server.
+
+# Serializzaione personalizzata
+Ci sono alcuni casi limite dove la serializzazione di default non è sufficiente. Risulta, quindi, necessario definire manualmente alcune operazioni di serializzazione e/o deserializzazione.
+
+## Il problema
+La classe che si vuole serializzare è `PersistentClock`: quando viene istanziata crea un thread che stampa la data e l'ora correnti a intervalli regolari:
+
+```java
+import java.util.Date;
+public class PersistentClock implements Runnable {
+    private Thread animator;
+    private long animationInterval;
+
+    public PersistentClock(int animationInterval) {
+        this.animationInterval = animationInterval;
+        animator = new Thread(this);
+        animator.start();
+    }
+    public void run() {
+        while (true) {
+            System.out.println(new Date());
+            try {
+                Thread.sleep(animationInterval);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    public static void main(String[] args) {
+        new PersistentClock(1000);
+    }
+}
+```
+
+Ora si rende la classe serializzabile:
+- Si implementa l'interfaccia `Serializable`
+- Il campo `animator` va dichiarato `transient` in quanto contiene un riferimento a `Thread` che non è serializzabile
+- L'oggetto viene serializzato su un file (ma potrebbe essere inviato tramite socket)
+
+
+<b>! <b>: dichiarando una variabile come `transient` non si esclude la serializzazione completa di quella variabile ma verrà serializzata ad un valore di default (null, 0, etc)
+
+
+```java
+import java.io.*;
+import java.util.Date;
+public class PersistentClock implements Serializable, Runnable {
+    private static final long serialVersionUID = 1;
+    private transient Thread animator;
+    private long animationInterval;
+
+    public PersistentClock(int animationInterval) {
+        this.animationInterval = animationInterval;
+        animator = new Thread(this);
+        animator.start();
+    }
+
+    public void run() {
+        while (true) {
+            System.out.println(new Date());
+            try {
+                Thread.sleep(animationInterval);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        PersistentClock p = new PersistentClock(1000);
+        try (ObjectOutput os = new ObjectOutputStream(new FileOutputStream("tmp.ser"))
+        ) {
+            os.writeObject(p);
+            os.flush();
+        }
+    }
+}
+```
+
+Quando si andrà a deserializzare l'oggetto, esso verrà ricostruito senza il thread <b>animator</b>: si ha una ricostruzione parziale.
+
+## Soluzione: serializzazione manuale
+Java consente di effettuare un override dei metodi di serializzazione e deserializzazione:
+
+- `private void writeObject(ObjectOutputStream out) throws IOException;`
+- `private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException;`
+
+che verranno richiamati al posto dei metodi di default.
+
+All’interno di questi metodi, si può richiamare il comportamento di default, invocando rispettivamente `out.defaultWriteObject()` e `in.defaultReadObject()`. Ciò è utile, ad esempio, se si vogliono solo aggiungere delle operazioni in più, senza invece cambiare come vengono scritti i campi (non static e non transient) dell’oggetto.
+
+### Codice
+Vogliamo che una volta ricostruito l'oggetto riparta subito la sua attività di scrittura della data e ora ad intervalli.
+
+```java
+import java.io.*;
+import java.util.Date;
+public class PersistentClock implements Serializable, Runnable {
+    private static final long serialVersionUID = 1;
+    private transient Thread animator;
+    private long animationInterval;
+
+    public PersistentClock(int animationInterval) {
+        this.animationInterval = animationInterval;
+        startAnimation();
+    }
+
+    private void startAnimation() {
+        animator = new Thread(this);
+        animator.start();
+    }
+
+    public void run() {
+        while (true) {
+            System.out.println(new Date());
+            try {
+                Thread.sleep(animationInterval);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //Si definisce manualmente la riscostruzione di default di tutti i campi e si richiama la creazione del thread in modo che venga subito avviato
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        startAnimation();
+    }
+
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        try (
+            ObjectInput is = new ObjectInputStream(new FileInputStream("tmp.ser"))
+        ) {
+            PersistentClock p = (PersistentClock) is.readObject();
+        }
+    }
+}
+```
