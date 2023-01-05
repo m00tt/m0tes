@@ -370,3 +370,134 @@ Quando si lancia il server RMI, bisogna indicare, con la proprietà java.rmi.ser
 java -Djava.security.policy=policy
      -Djava.rmi.server.codebase=<URL> ServerMain
 ```
+
+# RMI Callback
+Nel paradigma distribuito object-oriented, i ruoli di client e server non sono rigidamente fissati: infatti anche il client può comportarsi come server.
+
+Se il client è a sua volta un oggetto remoto, può inviare il suo riferimento al server, permettendo a quest'ultimo di chiamare metodi remoti del client.<br>
+Da qui, il termine <b>callback</b>.
+
+# Esempio: sistema di chat
+Al fine di introdurre la tecnica del _callback_, si svilupperà un sistema di chat, dove:
+- i partecipanti (client) entrano in una stanza virtuale gestita dal server
+- ogni volta che un partecipante invia un messaggio sulla chat, tutti i partecipanti alla stanza ricevono il messaggio
+- i client hanno la possibilità di abbandonare la stanza
+
+## Interfaccia remota del server
+Il server definisce, nella propria interfaccia remota, i metodi che i client invocheranno per inviare i dati.
+```java
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+public interface TtyChat extends Remote {
+    void enterRoom(TtyChatClient client) throws RemoteException;
+    void exitRoom(TtyChatClient client) throws RemoteException;
+    void saySomething(String something, TtyChatClient speaker) throws RemoteException;
+}
+```
+- `TtyChatClient` è l'interfaccia remota del client
+- Ogni client che vuole entrare nella stanza, invocherà il metodo `enterRoom`
+- Quando un client vuole inviare un messaggio, invoca il metodo `saySomething`
+
+## Implementazione del server
+```java
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.*;
+
+public class TtyChatImpl extends UnicastRemoteObject implements TtyChat { //Le istanze di questa classe saranno remote dato che estende UnicastRemoteObject
+    private final List<TtyChatClient> occupants = new ArrayList<>(); //lista di partecipanti
+    
+    public TtyChatImpl() throws RemoteException {}
+
+    public synchronized void enterRoom(TtyChatClient client) {
+        occupants.add(client); //viene aggiunto un nuovo partecipante alla stanza
+    }
+
+    public synchronized void exitRoom(TtyChatClient client) {
+        occupants.remove(client); //viene rimosso un partecipante dalla stanza
+    }
+
+    public synchronized void saySomething(String something, TtyChatClient speaker) throws RemoteException {
+        String message = speaker.name() + ": " + something; //viene effettuata una chiamata al client per recuperare il nome
+        System.out.println(Thread.currentThread() + ":Server: received '" + message + "'");
+
+        Iterator<TtyChatClient> iter = occupants.iterator();
+        while (iter.hasNext()) {
+            TtyChatClient client = iter.next();
+            try {
+                client.somethingSaid(message); //viene invocato il metodo del client per fargli stampare il messaggio
+            } catch (RemoteException e) {
+                System.out.println("Someone left");
+                iter.remove(); //se viene generato un errore, probabilmente il client si è disconnesso, quindi viene tolto dalla lista
+            }
+        }
+    }
+}
+
+
+//Main
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.RemoteException;
+
+public class TtyChatServer {
+    public static void main(String[] args) throws RemoteException {
+        TtyChatImpl obj = new TtyChatImpl(); //creazione dell'oggetto remoto
+        Registry registry = LocateRegistry.createRegistry(Registry.REGISTRY_PORT); //creazione del registry
+        registry.rebind("TtyChat", obj);  //bind dell'oggetto sul registry
+        System.out.println("TtyChat Server bound in registry");
+    }
+}
+```
+
+## Implementazione del client
+```java
+import java.io.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+public class TtyChatClientImpl extends UnicastRemoteObject implements TtyChatClient {
+    private final String myName;
+
+    public TtyChatClientImpl(String myName) throws RemoteException {
+        this.myName = myName;
+    }
+
+    public String name() {
+        return myName;
+    }
+
+    public void somethingSaid(String something) {
+        System.out.println(something);
+    }
+
+    public static void main(String[] args) throws Exception {
+        try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in))) {
+            System.out.println("What is your name?");
+            TtyChatClientImpl me = new TtyChatClientImpl(input.readLine()); //Creazione dell'oggetto remoto con il nome letto in input
+
+            Registry registry = LocateRegistry.getRegistry(); 
+            TtyChat server = (TtyChat) registry.lookup("TtyChat"); //riferimento all'oggetto remoto server
+
+            server.enterRoom(me); //invocazione del metodo remoto lato server per entrare nella stanza
+            System.out.println("You can now chat in the room");
+
+            while (true) {
+                String s = input.readLine(); //lettura dei messaggi da tastiera
+                if (s.equals("<quit>")) {
+                    break;
+                }
+                server.saySomething(s, me); //invoca il metodo remoto lato server per inviare il messaggio a tutti nella stanza
+            }
+
+            server.exitRoom(me); //invoca il metodo remoto lato server per uscire dalla stanza
+            UnicastRemoteObject.unexportObject(me, false); //viene rimosso l'oggetto remoto
+        }
+    }
+}
+```
