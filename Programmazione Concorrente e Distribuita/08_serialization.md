@@ -228,9 +228,9 @@ public class DeserializzaPunto {
 # Regole di serializzazione in Java
 - Tutti i tipi primitivi sono serializzabili
 - Un oggetto è serializzabile se la sua classe o la sua superclasse implementano l'interfaccia `Serializable`
-- Una vlasse può implementare `Serializable` anche se la sua superclasse non è serializzabile, purché tale superclasse abbia un costruttore senza argomenti
+- Una classe può implementare `Serializable` anche se la sua superclasse non è serializzabile, purché tale superclasse abbia un costruttore senza argomenti
 - Se si desidera serializzare solo alcuni campi di una classe, è possibile contrassegnare quelli da non salvare con l'attributo `transient`
-- I campi `static` di ua classe non vengono serializzati
+- I campi `static` di una classe non vengono serializzati
 - Se i campi di un oggetto serializzabile contengono un riferimento a un oggetto non serializzabile, verrà sollevata una `NotSerializableException`
 
 
