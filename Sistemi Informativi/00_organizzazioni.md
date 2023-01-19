@@ -19,7 +19,7 @@ Il bisogno di input e di output dipende dall'ambiente esterno.
 
 ## Organizzazione come sistema
 
-![Organizzazione come sistema](/assets/)
+![Organizzazione come sistema](/assets/sistemi_informativi/company_as_system.png)
 
 ## Ambiente organizzativo
 Insieme di elementi esterni all'organizzazione che possono influenzare (in tutto o in parte) l'organizzazione.
@@ -30,7 +30,7 @@ L'<b>ambiente</b> può essere:
 
 ### Ambiente organizzativo generale
 
-![Ambiente generale](/assets/)
+![Ambiente generale](/assets/sistemi_informativi/general_environment.png)
 
 <b>Variabili ambientali</b>
 
