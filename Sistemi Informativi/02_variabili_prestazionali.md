@@ -20,7 +20,7 @@ Un'attività è tanto più efficiente quanto maggiore è l'output per un dato in
 
 _La produttività è il rapporto tra output prodotto e input utilizzato_
 
-- Efficienza tecnica (interna)
+## Efficienza tecnica (interna)
 Misura la relazione tra input e output prendendo come riferimento la efficiency frontier.
 
 ![Efficiency Frontier](/assets/sistemi_informativi/efficienza_tecnica.png)
@@ -33,7 +33,7 @@ Misura la relazione tra input e output prendendo come riferimento la efficiency 
 <b>y</b>: incremento di produttività
 
 
-- Efficienza allocativa (esterna)
+## Efficienza allocativa (esterna)
 Rappresenta la relazione tra una combinazione ottimale di input e gli output raggiunti.
 
 ![Efficienza allocativa](/assets/sistemi_informativi/efficienza_allocativa.png)
@@ -41,6 +41,6 @@ Rappresenta la relazione tra una combinazione ottimale di input e gli output rag
 L'allocazione di risorse è ottimale, quindi, non sono possibili incrementi di efficienza senza generare effetti negativi (<b>pareto ottimalità</b>)
 
 
-- Paradosso di Jevons
+## Paradosso di Jevons
 Quando la produttività di qualcosa aumenta, il suo costo diminuisce. Con la stessa quantità di denaro si può quindi acquistarne di più, e questo aumenta la domanda.<br>
 Ma se aumenta la domanda, per soddisfarla bisogna incrementare la produttività.
