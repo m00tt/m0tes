@@ -48,3 +48,25 @@ PROBLEMA DECISIONALE
 - Come risolvere il problema della razionalità limitata?
 - Quale struttra permette meglio di incementare la capacità elaborativa per gestire l'incertezza ambientale?
 
+## The edge of chaos
+
+![EdgeOfChaos](/assets/sistemi_informativi/edge_of_chaos.png)
+
+## Instrumental rationality (razionalità strumentale)
+Comportati in modo da ottenere esattamente ciò che desideri di più, date le risorse (fisiche e mentali) a tua disposizione.
+
+Questo porta ad un'ottimizzazione del raggiungimento degli obiettivi individuali.
+
+Un modello potrebbe essere la riduzione di complessità di un problema in modo da massimizzare l'efficienza delle decisioni.
+
+Gli individui si comportano secondo i principi della scelta razionale: 
+gli individui usano i loro interessi personali per fare scelte che forniranno loro il meglio beneficio.
+
+## Value rationality 
+Gli individui agistono anche sulla base di interessi ideali e non sono materiali.
+
+La value rationality fa riferimento a scelte basate su valori.
+
+Se gli individui agiscono sulla base di valori, diminuisce la necessità di controllo.
+
+Gli individui possono agire "creativamente" in situazioni complesse, massimizzando le proprie capacità decisionali (tenendo conto dell'[edge of chaos](#the-edge-of-chaos))
