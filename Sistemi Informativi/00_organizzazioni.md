@@ -40,25 +40,25 @@ Ideologie, valori e norme sociali. Le convinzioni sulle condizioni gerarchiche, 
  - _Ambiente Tecnologico_<br>
 L'avanzamento scientifico e tecnologico della società.
 
- - _Ambiente Politico_
+ - _Ambiente Politico_<br>
 Il clima politico della società. Il grado di concentrazione del potere politico e il sistema dei partiti politici.
 
- - _Ambiente Legale_
+ - _Ambiente Legale_<br>
 Leggi specifiche riguardanti la formazione, tassazione e il controllo delle organizzazioni.
 
- - _Ambiente Risorse Naturali e Ambientali_
+ - _Ambiente Risorse Naturali e Ambientali_<br>
 Natura, quantità e disponibilità delle risorse naturali, incluso il clima ed altre condizioni ambientali.
 
- - _Ambiente Demografico_
+ - _Ambiente Demografico_<br>
 La natura delle risorse umane disponibili alla società; il loro numero, distribuzione, età, sesso, etc.
 
- - _Ambiente Sociologico_
+ - _Ambiente Sociologico_<br>
 La struttura di classe e la mobilità sociale.
 
- - _Educativo_ <br>
+ - _Educativo_<br>
 Il livello generale di alfabetizzazione della popolazione, il gradi di sofisticazione e specializzazione del sistema educativo.
 
- - _Economico_
+ - _Economico_<br>
 Il contesto economico generale, incluso il tipo di organizzazione economica. Il sistema bancario e le politiche di finanza pubblica.
 Caratteristiche degli invesimenti.
 
