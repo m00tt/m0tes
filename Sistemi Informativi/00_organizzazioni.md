@@ -11,7 +11,7 @@ _Le organizzazioni sono entità sociali giudate da obiettivi, progettate come si
  - Adattarsi all'ambiente in trasformazione e influenzarlo
 
 
-I fenomeni emersi negli ultimi anni (internet, crisi finanziaria, pandemie, globalizzazione) hanno fatto si che le _organizzazioni devono essere concepite come <b>sistemi aperti</b> e come parte di un sistema complesso.
+I fenomeni emersi negli ultimi anni (internet, crisi finanziaria, pandemie, globalizzazione) hanno fatto si che le _organizzazioni_ devono essere concepite come <b>sistemi aperti</b> e come parte di un sistema complesso.
 
 Un <b>sistema</b> è un insieme di elementi che acquisiscono input dall'ambiente, li trasformano e restiuiscono un output all'ambiente esterno.
 <br>
