@@ -1,10 +1,31 @@
-# Taylorismo
-La maggior efficienza del lavoro industriale è dovuto alla suddivisione del lavoro e all'aumento di efficienza individuale ottenibile grazie all'esecuzione di compiti specialistici, al posto dell'intero ciclo produttivo.
+# Scuola razionalistica
+Un primo ed importante contributo alla progettazione congiunta di sistema tecnico e struttura organizzativa è dovuto all'approccio _razionalistico_ della teoria organizzativa.
 
+Il termine razionalistico sta ad indicare la razionalità tecnica e funzionale delle organizzazioni, considerate come strumenti per il raggiungimento di obiettivi predefiniti con la massima efficienza possibile.
+
+## Taylor & Fayol
+Secondo <b>Taylor</b>, la maggior efficienza del lavoro industriale è dovuto alla suddivisione del lavoro e all'aumento di efficienza individuale ottenibile grazie all'esecuzione di compiti specialistici, al posto dell'intero ciclo produttivo.
+
+Una conseguenza immediata della suddivisione del lavoro fra più individui è la necessità di progettare e gestire le interdipendenze tra i compiti e tra coloro che ne sono responsabili. Nell'approccio razionalista classico le interdipendenze sono viste come una necessità di sincronizzazione tra i compiti operativi che minimizzi i tempi di attesa nelle code di lavorazione.
+
+<b>Caratteristiche del taylorismo</b>
 - _Organizzazione_ come problema di produttività del lavoro umano
 - Massimizzazione della divisione del lavoro = massimizzazione dell'efficienza
 - Studio e diffusione delle procedure soperte dagli impiegati migliori
 - Le imprese organizzate scientificamente ottengono risultati migliori di altre
+
+Taylor utilizza un approccio _bottom-up_: ovvero si analizzano i compiti individuali fino ad arrivare alle procedure operative.
+
+<b>Fayol</b>, invece, utilizza un approccio _top-down_, tra cui la necessità di organizzare gerarchicamente le attività.
+
+# Informazione come risorsa organizzativa
+Il sistema tecnico associato alla tecnologia dell'informazione viene comunemente chiamato _sistema informatico_.
+
+L'informazione ha alcune caratteristiche che la distinguono da qualsiasi altra risosra organizzativa e che, di conseguenza, contribuiscono a differenziare il sistema informatico dai tradizionali sistemi tecnici. Una differenza funzionale con le altre risorse organizzative è che l'informazione è la principale risorsa scambiata all'interno dell'organizzazione.
+
+In quanto risorsa essenziale dei processi gestionali, l'informazione e il sistema informatico sono legati non soltanto a economie di scala ma anche a _economie di scopo_.<br>
+Per definizione le economie di scopo derivano a parità di volumi di produzione da un più efficiente utilizzo dei fattori produttiv. Vengono chiamate economie di scopo poiché spesso la maggiore efficienza è legata alla differenziazione dei prodotti e all'ampliamento della loro gamma.<br>
+Le economie di scopo derivano da miglioramenti dei processi gestionali che, a loro volta, derivano da innovazioni del sistema informatico.
 
 # La prospettiva informativa
 Le organizzazioni possono essere considerate come sistemi che elaborano informazioni.<br>
@@ -14,7 +35,10 @@ Il lavoro manageriale è un'attività scientifica di analisi e implementazione d
 
 _L'informazione è una risorsa immateriale, <b>non esauribile</b> ed <b>auto generante</b>._
 
-Le innovazioni del sistema tecnico, velocizzano e migliorano il lavoro manageriale, ma bisogna prestare attenzione all'<b>overload informativo</b>.
+Le innovazioni del sistema tecnico, velocizzano e migliorano il lavoro manageriale, ma bisogna prestare attenzione all'<b>overload informativo</b> (sovrabbondanza di informazione).<br>
+L'_overload_ informativo è causato dalla limitata capacità individuale di processare informazioni. Studi hanno dimostrato che l'_underload_ informativo, entro certi limiti, porta a maggiore efficienza ed efficacia.
+
+In generale, i decisori, non hanno una percezione obiettiva dei propri limiti di capacità elaborativa e, di conseguenza tendono a procurarsi più informazione di quella che riescano in pratica ad utilizzare.
 
 Le organizzazioni sono sistemi aperti, in quanto interagiscono con l'ambiente esterno da cui ricavano informazioni.
 
