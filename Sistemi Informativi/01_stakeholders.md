@@ -35,7 +35,7 @@ Documento aziendale che le organizzazioni scrivono periodicamente a seguito di u
 
 
 ## Stakeholder analysis
-La <b>Stakeholder Theory</b> si basa sull'assunzione per cui le strategie che un'organizzazione mette in atto sono bolte a soddisfare gli obiettivi che caratterizzano i suoi stakeholders.
+La <b>Stakeholder Theory</b> si basa sull'assunzione per cui le strategie che un'organizzazione mette in atto sono volte a soddisfare gli obiettivi che caratterizzano i suoi stakeholders.
 
 Una strategia organizzativa ha maggiori possibilità di successo se si basa sulla identificazione degli stakeholders e su una valutazione di come gli obiettivi possono influenzare o essere influenzati dagli stakeholders.
 
@@ -59,7 +59,7 @@ Questo permette una <b>valutazione multidimensionale ed a 360°</b> delle perfor
 ### Network degli stakeholders
 Le reti degli stakeholders possono essere configurate in diverse maniere.
 
-<b>Esempio: caso McDonnel Douglas</b>
+<b>Esempio: caso McDonnel Douglas</b><br>
 McDonnel Douglas affidò a Convair un contratto per fornitura di parti di aerei, incluso un portellone chiamato DC-10.<br>
 Convair rilevò un difetto del DC-10 e lo comunicò a McDonnel Douglas che ignorò la segnalazione (che non venne riportato alla Federal Aviation Administration).<br>
 Poco tempo dopo, un aereo precipitò a causa del difetto.
