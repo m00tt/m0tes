@@ -20,17 +20,17 @@ Un'organizzazione utilizza risorse al fine di creare benessere e altri benefici 
 
 ![Rendicontazione](/assets/sistemi_informativi/rendicontazione.png)
 
-- Bilancio sociale
+- Bilancio sociale<br>
 È la rappresentazione del profilo etico di un'organizzazione, che ne certifica l'affidabilità e la capacita di creare valore.
 
 Il bilancio sociale è l'esito di un processo con il quale l'organizzazione rende conto delle scelte, delle attività, dei risultati e dell'impiego di risorse, in modo da consentire ai suoi stakeholders di conoscere e formulare un proprio giudizio sull'organizzazione.
 
-- Bilancio ambientale
+- Bilancio ambientale<br>
 Strumento che permette di analizzare la gestione del rapporto impresa-ambiente e l'impatto che l'attività ha sull'ecosistema.
 
 Nel bilancio ambientale si descrive l'approccio organizzativo e strategico per la gestione ambientale e si documenta l'impatto prodotto dalle azioni attuate.
 
-- Bilancio di sostenibilità (integrato)
+- Bilancio di sostenibilità (integrato)<br>
 Documento aziendale che le organizzazioni scrivono periodicamente a seguito di un processo di rendicontazione al fine di comunicare in modo trasparente i riultati sugli impatti ambientali, sociali e di governance (ESG - Environment, Social, Governance).
 
 
