@@ -69,7 +69,7 @@ PROBLEMA: gli accordi tra McDonnel Douglas e Convair impedivano a quest'ultimo d
 McDonnel Douglas aveva configurato il suo sistema di stakeholder come un'insieme di relazioni, con al centro se stessa (focal network).
 
 
-Quindi, l'obiettivo di definire una rete di stakeholder è quello di rappresentare le razioni tra essi:
+Quindi, l'obiettivo di definire una rete di stakeholder è quello di rappresentare le relazioni tra essi:
 - Chi è in relazione con chi?
 - Chi influenza chi?
 - Chi controlla chi?
@@ -79,22 +79,22 @@ Rappresentazione del livello di convolgimento degli stakeholders: dal più basso
 
 ![Levels](/assets/sistemi_informativi/stakeholders_levels.png)
 
-1. Information sharing
+1. Information sharing<br>
 Gli stakeholders sono informati delle attività dell'organizzazione, ma non possono influenzarla perché le decisioni vengono comunicate dopo che sono già state prese.
 
-2. Partecipation by Consultation
+2. Partecipation by Consultation<br>
 Gli stakeholders vengono consultati circa le decisioni che l'organizzazione deve prendere
 
-3. Partecipation through Material Incentives
+3. Partecipation through Material Incentives<br>
 Gli stakeholders sono coinvolti direttamente svolgendo qualche attività e ricevendone in cambio qualche tipo di incentivazione
 
-4. Functional Partecipation: Group Formation
+4. Functional Partecipation: Group Formation<br>
 Gli stakeholders partecipano direttamente all'attività dell'organizzazione per conseguire obiettivi.
 
-5. Interactive Partecipation/Collaboration
+5. Interactive Partecipation/Collaboration<br>
 Gli stakeholders sono coinvolti direttamente nella definizione degli obiettivi. In questo modo gli stakeholders influenzano direttamente l'organizzazione.
 
-6. Self-Actualization/Empowerment
+6. Self-Actualization/Empowerment<br>
 Gli stakeholders esercitano un controllo diretto sulle decisioni dell'organizzazione e sulle sue risorse.
 
 
