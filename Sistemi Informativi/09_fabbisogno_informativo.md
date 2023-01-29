@@ -39,9 +39,9 @@ $$C = IR - ID$$
 ### Riduzione dell'incertezza
 Le soluzioni sono due:
 
-1. Ridurre la quantità di informazioni richieste ($IR$)
+1. Ridurre la quantità di informazioni richieste ( $IR$ )
     - Creazione di task autonomi
     - Aumentare le risorse
-2. Aumentare la quantità di informazioni disponibili ($ID$)
+2. Aumentare la quantità di informazioni disponibili ( $ID$ )
     - Investire in sistemi informativi verticali e/o orizzontali
 
