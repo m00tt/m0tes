@@ -109,4 +109,4 @@ Il peso va da 0 (inifluente) a 5 (fortemente influente).
 ## Calcolo punteggio corretto
 $$F_c = F * A_g$$
 
-$$A_g = 0,65 + \sum_{e=1}^{14} P_e / 100
+$$A_g = 0,65 + \sum_{e=1}^{14} P_e / 100$$
