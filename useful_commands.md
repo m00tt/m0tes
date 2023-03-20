@@ -75,3 +75,8 @@ Get-ScheduledTask | ForEach-Object {
     }
 } | Out-File -FilePath C:\Users\$env:UserName\Desktop\result.txt
 ```
+
+2. Get details of scheduled task from command line
+```cmd
+schtasks /query /tn "<task_path>" /xml
+```
